@@ -4,14 +4,16 @@
 
 // TODO List:
 // * Add more options to commands
-//      * !mc refresh                       - Refreshes the public and private maps.
-//      * !mc rejoin                        - Removes the player's playerspecificpages entry and moves 
-//                                            them back to the global players tab.
-//      * !mc move [player] [map name]      - Moves the player with the provided name to the map with
-//                                            the provided name. (GM required for private maps)
-//      * !mc moveall [map name]            - Empties playerspecificpages and moves all players to the
-//                                            map with the provided name. (GM Only)
-//      * !mc help                          - Display help on how to use the script.
+//      * !mc refresh                           - Refreshes the public and private maps.
+//      * !mc rejoin                            - Removes the player's playerspecificpages entry and moves 
+//                                                them back to the global players tab.
+//      * !mc move [map name]                   - Moves the sender to the map with the provided name.
+//                                                (GM required for private maps)
+//      * !mc moveplayer [player] [map name]    - Moves the player with the provided name to the map with
+//                                                the provided name. (GM required for private maps)
+//      * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
+//                                                map with the provided name. (GM Only)
+//      * !mc help                              - Display help on how to use the script.
 
 var MapChange = MapChange || (function() {
     'use strict';
@@ -68,11 +70,11 @@ var MapChange = MapChange || (function() {
         
         // Check the lower cased version of the message to see if it contains the call for
         // this script to run, if it doesn't then return.
-        switch (args[0].toLowerCase()) {
+        switch (args.shift().toLowerCase()) {
             case "!mapchange":
             case "!mc":
-                if (args.length > 1) {
-                    processCommands(msg);
+                if (args.length > 0) {
+                    processCommands(msg, args);
                 }
                 else {
                     showHelp(msg);
@@ -83,17 +85,21 @@ var MapChange = MapChange || (function() {
         }
     },
     
-    processCommands = function(msg) {
-        // Grab the contents of the msg sent and split it into the individual arguments..
-        var args = msg.content.split(/\s+/);
-        var command = args[1].toLowerCase();
+    processCommands = function(msg, args) {
+        var command = args.shift().toLowerCase();
         
         switch (command) {
+            case "help":
+                showHelp();
+                break;
             case "refresh":
                 refresh();
                 break;
             case "move":
-                movePlayer(msg);
+                move(msg, msg.playerid, args.join().replace(/,/g, " "));
+                break;
+            case "moveplayer":
+                move(msg, getPlayerIdFromDisplayName(args.shift()), args.join().replace(/,/g, " "));
                 break;
             default:
                 showHelp();
@@ -101,8 +107,20 @@ var MapChange = MapChange || (function() {
         }
     },
 
-    showHelp = function(msg) {
-        //sendChat();
+    getPlayerIdFromDisplayName = function(name) {
+        var players = findObjs({_type: 'player'});
+        
+        for (var key in players) {
+            if (players[key].get("_displayname") === name) {
+                return players[key].get("_id");
+            }
+        }
+        
+        return undefined;
+    },
+
+    showHelp = function() {
+        sendChat("MapChange", "TODO: Add Help");
         log("TODO: Add Help");
     },
 
@@ -114,20 +132,26 @@ var MapChange = MapChange || (function() {
         log("Refresh Complete");
     },
     
-    movePlayer = function(msg) {
-        var sender = msg.playerid;
-        var target = args[2];
-        
+    move = function(msg, sender, target) {
         var pages = findObjs({_type: 'page'});
         var playerPages = Campaign().get("playerspecificpages");
+        
+        var players = findObjs({_type: 'player'});
+        log(players);
+        
+        if (playerPages === false) {
+            playerPages = {};
+        }
         
         if (target in publicMaps) {
             // Move player.
             playerPages[sender] = publicMaps[target];
         }
         else if (target in privateMaps) {
-            if(playerIsGM(msg.playerid)) {
+            log(playerIsGM(sender));
+            if(playerIsGM(sender)) {
                 // Move player.
+                playerPages[sender] = privateMaps[target];
             }
         }
         else {
@@ -135,9 +159,7 @@ var MapChange = MapChange || (function() {
             //sendChat();
         }
         
-        log(pages);
-        log(playerPages);
-        log(publicMaps);
+        Campaign().set("playerspecificpages", playerPages);
     },
 
     registerEventHandlers = function() {
