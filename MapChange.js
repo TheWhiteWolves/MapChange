@@ -4,14 +4,16 @@
 
 // TODO List:
 // * Add more options to commands
-//      * !mc refresh                           - Refreshes the public and private maps.
-//      * !mc rejoin                            - Removes the player's playerspecificpages entry and moves 
+// Done * !mc refresh                           - Refreshes the public and private maps.
+// Done * !mc rejoin                            - Removes the senders's playerspecificpages entry and moves 
 //                                                them back to the global players tab.
-//      * !mc move [map name]                   - Moves the sender to the map with the provided name.
+//      * !mc rejoin [player name]              - Removes the provided player's playerspecificpages entry and  
+//                                                moves them back to the global players tab.
+// Done * !mc move [map name]                   - Moves the sender to the map with the provided name.
 //                                                (GM required for private maps)
-//      * !mc moveplayer [player] [map name]    - Moves the player with the provided name to the map with
+// Done * !mc moveplayer [player] [map name]    - Moves the player with the provided name to the map with
 //                                                the provided name. (GM required for private maps)
-//      * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
+// Done * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
 //                                                map with the provided name. (GM Only)
 //      * !mc help                              - Display help on how to use the script.
 
@@ -67,7 +69,7 @@ var MapChange = MapChange || (function() {
 
         // Grab the contents of the msg sent and split it into the individual arguments..
         var args = msg.content.split(/\s+/);
-        
+        log(args);
         // Check the lower cased version of the message to see if it contains the call for
         // this script to run, if it doesn't then return.
         switch (args.shift().toLowerCase()) {
@@ -97,12 +99,26 @@ var MapChange = MapChange || (function() {
                 break;
             case "move":
                 move(msg, msg.playerid, args.join().replace(/,/g, " "));
+                move(msg, msg.playerid, args.join().replace(/,/g, " "));
                 break;
             case "moveplayer":
-                move(msg, getPlayerIdFromDisplayName(args.shift()), args.join().replace(/,/g, " "));
+                var sender = args.shift();
+                move(msg, getPlayerIdFromDisplayName(sender), args.join().replace(/,/g, " "));
+                move(msg, getPlayerIdFromDisplayName(sender), args.join().replace(/,/g, " "));
+                break;
+            case "rejoin":
+                if (args.length > 0) {
+                    rejoin(getPlayerIdFromDisplayName(args.shift()));
+                }
+                else {
+                    rejoin(msg.playerid);
+                }
+                break;
+            case "moveall":
+                moveall(msg, args.join().replace(/,/g, " "));
                 break;
             default:
-                showHelp();
+                showHelp(msg);
                 break;
         }
     },
@@ -119,8 +135,8 @@ var MapChange = MapChange || (function() {
         return undefined;
     },
 
-    showHelp = function() {
-        sendChat("MapChange", "TODO: Add Help");
+    showHelp = function(msg) {
+        sendChat("MapChange", "/w " + msg.who + " TODO: Add Help");
         log("TODO: Add Help");
     },
 
@@ -136,30 +152,63 @@ var MapChange = MapChange || (function() {
         var pages = findObjs({_type: 'page'});
         var playerPages = Campaign().get("playerspecificpages");
         
-        var players = findObjs({_type: 'player'});
-        log(players);
-        
         if (playerPages === false) {
             playerPages = {};
         }
         
         if (target in publicMaps) {
             // Move player.
+            if(sender in playerPages) {
+                delete playerPages[sender];
+                Campaign().set("playerspecificpages", false);
+            }
             playerPages[sender] = publicMaps[target];
         }
         else if (target in privateMaps) {
-            log(playerIsGM(sender));
             if(playerIsGM(sender)) {
                 // Move player.
+                if(sender in playerPages) {
+                    delete playerPages[sender];
+                    Campaign().set("playerspecificpages", false);
+                }
                 playerPages[sender] = privateMaps[target];
             }
         }
         else {
             // Report Map not found.
-            //sendChat();
+            sendChat("MapChange", "/w " + msg.who + " Map " + target + "not found");
         }
         
         Campaign().set("playerspecificpages", playerPages);
+    },
+
+    rejoin = function(sender) {
+        var playerPages = Campaign().get("playerspecificpages");
+        if(sender in playerPages) {
+            delete playerPages[sender];
+            Campaign().set("playerspecificpages", false);
+        }
+        Campaign().set("playerspecificpages", playerPages);
+    },
+
+    moveall = function(msg, target) {
+        log(playerIsGM(msg.playerid));
+        if (playerIsGM(msg.playerid)) {
+            var bookmarkPage = Campaign().get("playerpageid");
+            if (target in publicMaps) {
+                Campaign().set("playerspecificpages", false);
+                bookmarkPage = publicMaps[target];
+            }
+            else if (target in privateMaps) {
+                Campaign().set("playerspecificpages", false);
+                bookmarkPage = privateMaps[target];
+            }
+            else {
+                sendChat("MapChange", "/w " + msg.who + " Map " + target + " not found");
+            }
+            
+            Campaign().set("playerpageid", bookmarkPage);
+        }
     },
 
     registerEventHandlers = function() {
