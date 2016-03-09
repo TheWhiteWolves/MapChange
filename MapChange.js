@@ -237,9 +237,11 @@ var MapChange = MapChange || (function() {
 
     rejoin = function(sender) {
         var playerPages = Campaign().get("playerspecificpages");
-        if (sender in playerPages) {
-            delete playerPages[sender];
-            Campaign().set("playerspecificpages", false);
+        if (playerPages !== false) {
+            if (sender in playerPages) {
+                delete playerPages[sender];
+                Campaign().set("playerspecificpages", false);
+            }
         }
         Campaign().set("playerspecificpages", playerPages);
     },
