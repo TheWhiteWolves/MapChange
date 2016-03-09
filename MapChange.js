@@ -63,20 +63,28 @@ var MapChange = MapChange || (function() {
     },
     
     handleInput = function(msg) {
+        // Check that the message sent is for the api, if not return as we don't need to do anything.
         if (msg.type !== "api") {
             return;
         }
-
-        // Grab the contents of the msg sent and split it into the individual arguments..
-        var args = msg.content.split(/\s+/);
-        log(args);
+        
+        // Grab the contents of the msg sent and split it into the individual arguments.
+        var args = msg.content.split(/\s+--/);
+        // Parse the first section of the arguments to get an array containing the commands.
+        var commands = parseCommands(args.shift());
+        // Parse the remaining aruments to get any parameters passed in.
+        var params = parseParameters(args);
+        
+        log(commands);
+        log(params);
+        
         // Check the lower cased version of the message to see if it contains the call for
         // this script to run, if it doesn't then return.
-        switch (args.shift().toLowerCase()) {
+        switch (commands.shift().toLowerCase()) {
             case "!mapchange":
             case "!mc":
-                if (args.length > 0) {
-                    processCommands(msg, args);
+                if (commands.length > 0) {
+                    processCommands(msg, commands, params);
                 }
                 else {
                     showHelp(msg);
@@ -87,10 +95,21 @@ var MapChange = MapChange || (function() {
         }
     },
     
-    processCommands = function(msg, args) {
-        var command = args.shift().toLowerCase();
-        
-        switch (command) {
+    parseCommands = function(args) {
+        return args.split(/\s+/);
+    },
+    
+    parseParameters = function(args) {
+        var params = {};
+        for (var param in args) {
+            var tmp = args[param].split(/\s+/);
+            params[tmp.shift()] = tmp.join().replace(/,/g, " ");
+        }
+        return params;
+    },
+    
+    processCommands = function(msg, commands, params) {
+        switch (commands.shift().toLowerCase()) {
             case "help":
                 showHelp();
                 break;
@@ -98,13 +117,19 @@ var MapChange = MapChange || (function() {
                 refresh();
                 break;
             case "move":
-                move(msg, msg.playerid, args.join().replace(/,/g, " "));
-                move(msg, msg.playerid, args.join().replace(/,/g, " "));
-                break;
-            case "moveplayer":
-                var sender = args.shift();
-                move(msg, getPlayerIdFromDisplayName(sender), args.join().replace(/,/g, " "));
-                move(msg, getPlayerIdFromDisplayName(sender), args.join().replace(/,/g, " "));
+                if(params.hasOwnProperty("target")) {
+                    if (params.hasOwnProperty("player")) {
+                        move(msg, getPlayerIdFromDisplayName(params.player), params.target);
+                        move(msg, getPlayerIdFromDisplayName(params.player), params.target);
+                    }
+                    else {
+                        move(msg, msg.playerid, params.target);
+                        move(msg, msg.playerid, params.target);
+                    }
+                }
+                else {
+                    sendChat("MapChange", "/w " + msg.who + " Target map parameter missing, use !mc help to see how to use this script.");
+                }
                 break;
             case "rejoin":
                 if (args.length > 0) {
