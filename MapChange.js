@@ -32,6 +32,7 @@ var MapChange = MapChange || (function() {
     // These are maps that only the GM can move people to.
     privateMaps = {},
     
+    // Constructs the private and public maps for use in the api script.
     constructMaps = function() {
         // Get an object containing all the pages in the campaign.
         var pages = findObjs({_type: 'page'});
@@ -67,6 +68,7 @@ var MapChange = MapChange || (function() {
         }
     },
     
+    // Handle the input message call for the api from the chat event.
     handleInput = function(msg) {
         // Check that the message sent is for the api, if not return as we don't need to do anything.
         if (msg.type !== "api") {
@@ -102,11 +104,13 @@ var MapChange = MapChange || (function() {
         }
     },
     
+    // Parses the commands of the call to the api script.
     parseCommands = function(args) {
         // Split the arguments by spaces and return the array containing them all.
         return args.split(/\s+/);
     },
     
+    // Parses the parameters of the call to the api script.
     parseParameters = function(args) {
         // Declare a new object to hold the parameters.
         var params = {};
@@ -122,6 +126,7 @@ var MapChange = MapChange || (function() {
         return params;
     },
     
+    // Processes the commands provided in the call to the api script.
     processCommands = function(msg, commands, params) {
         // Take the command and decide what function to run.
         switch (commands.shift().toLowerCase()) {
@@ -142,13 +147,13 @@ var MapChange = MapChange || (function() {
                     // haven't then user the id of the sender.
                     if (params.hasOwnProperty("player")) {
                         // Run the player move twice, currently there is strange behaviour happening
-                        // that requires a second run to update the instance.
+                        // that requires a second run to update the instance. (Dev Servers Only)
                         move(msg, getPlayerIdFromDisplayName(params.player), params.target);
                         move(msg, getPlayerIdFromDisplayName(params.player), params.target);
                     }
                     else {
                         // Run the player move twice, currently there is strange behaviour happening
-                        // that requires a second run to update the instance.
+                        // that requires a second run to update the instance. (Dev Servers Only)
                         move(msg, msg.playerid, params.target);
                         move(msg, msg.playerid, params.target);
                     }
@@ -159,18 +164,32 @@ var MapChange = MapChange || (function() {
                 }
                 break;
             case "rejoin":
+                // Check to see if a player name was provided, if so then run rejoin on that player only if
+                // the sender is either a GM or the provided player is the sender.
                 if (params.hasOwnProperty("player")) {
-                    rejoin(getPlayerIdFromDisplayName(params.player));
+                    // Check the sender is either a GM or the provided player.
+                    if (playerIsGM(msg.playerid) || params.player === msg.who) {
+                        // Run the rejoin on the provided player.
+                        rejoin(getPlayerIdFromDisplayName(params.player));
+                    }
+                    else {
+                        // Send a warning to the sender to tell tehm that they cannot perform the action.
+                        sendChat("MapChange", "/w " + msg.who + " You do not have the permission required to perform that action.");
+                    }
                 }
                 else {
+                    // Run rejoin on the sender of the api call.
                     rejoin(msg.playerid);
                 }
                 break;
             case "moveall":
+                // Run the player move twice, currently there is strange behaviour happening
+                // that requires a second run to update the instance. (Dev Servers Only)
                 moveall(msg, params.target);
                 moveall(msg, params.target);
                 break;
             default:
+                // Show the scripts help text is no further command was provided.
                 showHelp(msg);
                 break;
         }
