@@ -243,6 +243,9 @@ var MapChange = MapChange || (function() {
                 Campaign().set("playerspecificpages", false);
             }
         }
+        if (_.isEmpty(playerPages)) {
+            playerPages = false;
+        }
         Campaign().set("playerspecificpages", playerPages);
     },
 
