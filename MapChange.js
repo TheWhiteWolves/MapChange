@@ -146,15 +146,11 @@ var MapChange = MapChange || (function() {
                     // Check to see if the sender has provided a player to be moved, if they 
                     // haven't then user the id of the sender.
                     if (params.hasOwnProperty("player")) {
-                        // Run the player move twice, currently there is strange behaviour happening
-                        // that requires a second run to update the instance. (Dev Servers Only)
-                        move(msg, getPlayerIdFromDisplayName(params.player), params.target);
+                        // Move the provided player to the map with the provided name.
                         move(msg, getPlayerIdFromDisplayName(params.player), params.target);
                     }
                     else {
-                        // Run the player move twice, currently there is strange behaviour happening
-                        // that requires a second run to update the instance. (Dev Servers Only)
-                        move(msg, msg.playerid, params.target);
+                        // Move the sender to the map with the provided name.
                         move(msg, msg.playerid, params.target);
                     }
                 }
@@ -183,9 +179,8 @@ var MapChange = MapChange || (function() {
                 }
                 break;
             case "moveall":
-                // Run the player move twice, currently there is strange behaviour happening
-                // that requires a second run to update the instance. (Dev Servers Only)
-                moveall(msg, params.target);
+                // Move all the players back to the bookmark and then move the bookmark to the map with
+                // the provided name.
                 moveall(msg, params.target);
                 break;
             default:
@@ -232,7 +227,6 @@ var MapChange = MapChange || (function() {
             // Move player.
             if(sender in playerPages) {
                 delete playerPages[sender];
-                Campaign().set("playerspecificpages", false);
             }
             playerPages[sender] = publicMaps[target];
         }
@@ -241,7 +235,6 @@ var MapChange = MapChange || (function() {
                 // Move player.
                 if(sender in playerPages) {
                     delete playerPages[sender];
-                    Campaign().set("playerspecificpages", false);
                 }
                 playerPages[sender] = privateMaps[target];
             }
@@ -251,6 +244,7 @@ var MapChange = MapChange || (function() {
             sendChat("MapChange", "/w " + msg.who + " Map " + target + "not found");
         }
         
+        Campaign().set("playerspecificpages", false);
         Campaign().set("playerspecificpages", playerPages);
     },
 
