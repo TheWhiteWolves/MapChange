@@ -31,6 +31,7 @@
 // Also note that when you are in the GM view (i.e. logged in as GM) the move commands will not change your view,
 // it is only able to change the view from the players perspective, so if you goto My Settings > Join as Player when in
 // your campaign you will see it has changed your view as a player but not as a GM.
+// See https://github.com/TheWhiteWolves/MapChange/issues/5
 
 var MapChange = MapChange || (function() {
     'use strict';
