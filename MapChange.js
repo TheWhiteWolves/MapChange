@@ -28,6 +28,10 @@
 // The name and the parameter marker must be seperated by a space and each parameter set must be seperated by a space,
 // it is ok to have spaces the the map or player names, see the map name in the example.
 
+// Also note that when you are in the GM view (i.e. logged in as GM) the move commands will not change your view,
+// it is only able to change the view from the players perspective, so if you goto My Settings > Join as Player when in
+// your campaign you will see it has changed your view as a player but not as a GM.
+
 var MapChange = MapChange || (function() {
     'use strict';
     // Config
