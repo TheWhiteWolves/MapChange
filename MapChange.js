@@ -15,7 +15,18 @@
 //                                                provided name. (GM required for private maps)
 // Done * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
 //                                                map with the provided name. (GM Only)
+//      * !mc menu                              - Provides a chat based menu for players to use to teleport.
+//                                                See https://github.com/TheWhiteWolves/MapChange/issues/4
 //      * !mc help                              - Display help on how to use the script.
+//                                                See https://github.com/TheWhiteWolves/MapChange/issues/3
+
+// Note for Users: When usng a command from the list above that wants you to specify a parameter you need to use
+// --player [player name] for the name of the player and --target [map name] for the name of the map.
+
+// e.g. !mc move --player TheWhiteWolves --target Forest of Boland
+
+// The name and the parameter marker must be seperated by a space and each parameter set must be seperated by a space,
+// it is ok to have spaces the the map or player names, see the map name in the example.
 
 var MapChange = MapChange || (function() {
     'use strict';
