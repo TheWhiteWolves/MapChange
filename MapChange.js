@@ -38,6 +38,8 @@ var MapChange = MapChange || (function() {
     // Config
     // Set to true to use built in debug statements
     var debug = true,
+    // Set to false to turn off notifing the GM when a player moves.
+    gmNotify = true,
     // When true places the pages with name containing the marker into the public list.
     // Use this if you want maps to be private by default instead of public by default.
     invertedMarker = false,
@@ -182,7 +184,7 @@ var MapChange = MapChange || (function() {
                     // Check the sender is either a GM or the provided player.
                     if (playerIsGM(msg.playerid) || params.player === msg.who) {
                         // Run the rejoin on the provided player.
-                        rejoin(getPlayerIdFromDisplayName(params.player));
+                        rejoin(msg, getPlayerIdFromDisplayName(params.player));
                     }
                     else {
                         // Send a warning to the sender to tell tehm that they cannot perform the action.
@@ -191,7 +193,7 @@ var MapChange = MapChange || (function() {
                 }
                 else {
                     // Run rejoin on the sender of the api call.
-                    rejoin(msg.playerid);
+                    rejoin(msg, msg.playerid);
                 }
                 break;
             case "moveall":
@@ -245,6 +247,10 @@ var MapChange = MapChange || (function() {
                 delete playerPages[sender];
             }
             playerPages[sender] = publicMaps[target];
+            
+            if (gmNotify) {
+                sendChat("MapChange", "/w gm " + msg.who + " has moved to " + target);
+            }
         }
         else if (target in privateMaps) {
             if(playerIsGM(msg.playerid)) {
@@ -253,6 +259,10 @@ var MapChange = MapChange || (function() {
                     delete playerPages[sender];
                 }
                 playerPages[sender] = privateMaps[target];
+                
+                if (gmNotify) {
+                    sendChat("MapChange", "/w gm " + msg.who + " has moved to " + target);
+                }
             }
         }
         else {
@@ -264,7 +274,7 @@ var MapChange = MapChange || (function() {
         Campaign().set("playerspecificpages", playerPages);
     },
 
-    rejoin = function(sender) {
+    rejoin = function(msg, sender) {
         var playerPages = Campaign().get("playerspecificpages");
         if (playerPages !== false) {
             if (sender in playerPages) {
@@ -276,6 +286,10 @@ var MapChange = MapChange || (function() {
             playerPages = false;
         }
         Campaign().set("playerspecificpages", playerPages);
+        
+        if (gmNotify) {
+            sendChat("MapChange", "/w gm " + msg.who + " has rejoined the bookmark");
+        }
     },
 
     moveall = function(msg, target) {
@@ -284,10 +298,18 @@ var MapChange = MapChange || (function() {
             if (target in publicMaps) {
                 Campaign().set("playerspecificpages", false);
                 bookmarkPage = publicMaps[target];
+                
+                if (gmNotify) {
+                    sendChat("MapChange", "/w gm All players have moved to " + target);
+                }
             }
             else if (target in privateMaps) {
                 Campaign().set("playerspecificpages", false);
                 bookmarkPage = privateMaps[target];
+                
+                if (gmNotify) {
+                    sendChat("MapChange", "/w gm All players have moved to " + target);
+                }
             }
             else {
                 sendChat("MapChange", "/w " + msg.who + " Map " + target + " not found");
