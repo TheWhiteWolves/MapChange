@@ -260,7 +260,10 @@ var MapChange = MapChange || (function() {
             }
         }
         
-        log(text);
+        if(debug) {
+            log(text);
+        }
+
         chat("/w", msg.who.replace("(GM)", ""), text);
     },
 
