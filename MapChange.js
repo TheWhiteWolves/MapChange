@@ -234,7 +234,7 @@ var MapChange = MapChange || (function() {
         
         var displayLength = 20;
         var players = findObjs({_type: 'player'});
-        var text = "Available Maps: "
+        var text = "&#10;Available Maps: &#10;"
         
         for(var key in publicMaps) {
             text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
@@ -242,7 +242,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
                 }
                 text += "})";
             }
@@ -254,7 +254,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
                 }
                 text += "})";
             }
@@ -263,7 +263,7 @@ var MapChange = MapChange || (function() {
         if(debug) {
             log(text);
         }
-
+        
         chat("/w", msg.who.replace("(GM)", ""), text);
     },
 
@@ -362,6 +362,7 @@ var MapChange = MapChange || (function() {
     },
     
     chat = function(type, who, message) {
+        who = who.split(" ")[0];
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
     },
 
