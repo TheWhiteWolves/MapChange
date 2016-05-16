@@ -152,6 +152,9 @@ var MapChange = MapChange || (function() {
                 // Send the help text to the player who sent the message.
                 showHelp(msg);
                 break;
+            case "menu":
+                showMenu(msg);
+                break;
             case "refresh":
                 // Refresh the public and private maps to pull in any changes made since the script
                 // was last started.
@@ -174,7 +177,7 @@ var MapChange = MapChange || (function() {
                 }
                 else {
                     // Send a chat message to tell teh sender that they missed the target map parameter.
-                    sendChat("MapChange", "/w " + msg.who + " Target map parameter missing, use !mc help to see how to use this script.");
+                    chat("/w", msg.who, "Target map parameter missing, use !mc help to see how to use this script.");
                 }
                 break;
             case "rejoin":
@@ -188,7 +191,7 @@ var MapChange = MapChange || (function() {
                     }
                     else {
                         // Send a warning to the sender to tell tehm that they cannot perform the action.
-                        sendChat("MapChange", "/w " + msg.who + " You do not have the permission required to perform that action.");
+                        chat("/w", msg.who, "You do not have the permission required to perform that action.");
                     }
                 }
                 else {
@@ -221,8 +224,44 @@ var MapChange = MapChange || (function() {
     },
 
     showHelp = function(msg) {
-        sendChat("MapChange", "/w " + msg.who + " TODO: Add Help");
+        chat("/w", msg.who, "TODO: Add Help");
         log("TODO: Add Help");
+    },
+
+    showMenu = function(msg) {
+        //sendChat("MapChange", "/w " + msg.who + " TODO: Add Menu");
+        //log("TODO: Add Menu");
+        
+        var displayLength = 20;
+        var players = findObjs({_type: 'player'});
+        var text = "Available Maps: "
+        
+        for(var key in publicMaps) {
+            text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
+            if(playerIsGM(msg.playerid)) {
+                text += "[All](!mc moveall --target " + key + ")";
+                text += "[Other](!mc move --target " + key + " --player ?{Player";
+                for (var key in players) {
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "");
+                }
+                text += "})";
+            }
+        }
+                
+        if (playerIsGM(msg.playerid)) {
+            for(var key in privateMaps) {
+                text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
+                text += "[All](!mc moveall --target " + key + ")";
+                text += "[Other](!mc move --target " + key + " --player ?{Player";
+                for (var key in players) {
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "");
+                }
+                text += "})";
+            }
+        }
+        
+        log(text);
+        chat("/w", msg.who.replace("(GM)", ""), text);
     },
 
     refresh = function() {
@@ -249,7 +288,7 @@ var MapChange = MapChange || (function() {
             playerPages[sender] = publicMaps[target];
             
             if (gmNotify) {
-                sendChat("MapChange", "/w gm " + msg.who + " has moved to " + target);
+                chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved to " + target);
             }
         }
         else if (target in privateMaps) {
@@ -261,13 +300,13 @@ var MapChange = MapChange || (function() {
                 playerPages[sender] = privateMaps[target];
                 
                 if (gmNotify) {
-                    sendChat("MapChange", "/w gm " + msg.who + " has moved to " + target);
+                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved to " + target);
                 }
             }
         }
         else {
             // Report Map not found.
-            sendChat("MapChange", "/w " + msg.who + " Map " + target + "not found");
+            chat("/w", msg.who, "Map " + target + "not found");
         }
         
         Campaign().set("playerspecificpages", false);
@@ -288,7 +327,7 @@ var MapChange = MapChange || (function() {
         Campaign().set("playerspecificpages", playerPages);
         
         if (gmNotify) {
-            sendChat("MapChange", "/w gm " + msg.who + " has rejoined the bookmark");
+            chat("/w", "gm", msg.who + " has rejoined the bookmark");
         }
     },
 
@@ -300,7 +339,7 @@ var MapChange = MapChange || (function() {
                 bookmarkPage = publicMaps[target];
                 
                 if (gmNotify) {
-                    sendChat("MapChange", "/w gm All players have moved to " + target);
+                    chat("/w", "gm", "All players have moved to " + target);
                 }
             }
             else if (target in privateMaps) {
@@ -308,15 +347,19 @@ var MapChange = MapChange || (function() {
                 bookmarkPage = privateMaps[target];
                 
                 if (gmNotify) {
-                    sendChat("MapChange", "/w gm All players have moved to " + target);
+                    chat("/w", "gm", "All players have moved to " + target);
                 }
             }
             else {
-                sendChat("MapChange", "/w " + msg.who + " Map " + target + " not found");
+                chat("/w", msg.who, "Map " + target + " not found");
             }
             
             Campaign().set("playerpageid", bookmarkPage);
         }
+    },
+    
+    chat = function(type, who, message) {
+        sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
     },
 
     registerEventHandlers = function() {
