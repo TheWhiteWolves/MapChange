@@ -158,7 +158,7 @@ var MapChange = MapChange || (function() {
             case "refresh":
                 // Refresh the public and private maps to pull in any changes made since the script
                 // was last started.
-                refresh();
+                refresh(msg);
                 break;
             case "move":
                 // Check to see if the sender has provided and target map for the move, if they
@@ -276,12 +276,16 @@ var MapChange = MapChange || (function() {
         chat("/w", msg.who.replace("(GM)", ""), text);
     },
 
-    refresh = function() {
+    refresh = function(msg) {
         log("Refreshing Maps...");
         publicMaps = {};
         privateMaps = {};
         constructMaps();
         log("Refresh Complete");
+        
+        if (gmNotify) {
+            chat("/w", msg.who.replace("(GM)", ""), "Map Refresh Complete");
+        }
     },
     
     move = function(msg, sender, target) {
