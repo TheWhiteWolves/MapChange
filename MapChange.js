@@ -251,7 +251,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "(").replace(")", ")");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
                 }
                 text += "})";
             }
@@ -263,7 +263,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "(").replace(")", ")");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
                 }
                 text += "})";
             }
