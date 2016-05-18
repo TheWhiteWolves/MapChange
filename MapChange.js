@@ -222,6 +222,18 @@ var MapChange = MapChange || (function() {
         
         return undefined;
     },
+    
+    getDisplayNameFromPlayerId = function(id) {
+        var players = findObjs({_type: 'player'})
+        
+        for (var key in players) {
+            if (players[key].get("_id") == id) {
+                return players[key].get("_displayname").replace("(GM)", "");
+            }
+        }
+        
+        return undefined;
+    },
 
     showHelp = function(msg) {
         chat("/w", msg.who, "TODO: Add Help");
@@ -229,12 +241,9 @@ var MapChange = MapChange || (function() {
     },
 
     showMenu = function(msg) {
-        //sendChat("MapChange", "/w " + msg.who + " TODO: Add Menu");
-        //log("TODO: Add Menu");
-        
         var displayLength = 20;
         var players = findObjs({_type: 'player'});
-        var text = "&#10;Available Maps: &#10;"
+        var text = "Available Maps: ";
         
         for(var key in publicMaps) {
             text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
@@ -242,7 +251,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "(").replace(")", ")");
                 }
                 text += "})";
             }
@@ -254,7 +263,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
+                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "(").replace(")", ")");
                 }
                 text += "})";
             }
@@ -278,6 +287,11 @@ var MapChange = MapChange || (function() {
     move = function(msg, sender, target) {
         var pages = findObjs({_type: 'page'});
         var playerPages = Campaign().get("playerspecificpages");
+        var differentSender = false;
+        
+        if (msg.playerid != sender) {
+            differentSender = true;
+        }
         
         if (playerPages === false) {
             playerPages = {};
@@ -291,19 +305,21 @@ var MapChange = MapChange || (function() {
             playerPages[sender] = publicMaps[target];
             
             if (gmNotify) {
-                chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved to " + target);
+                var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
+                chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
             }
         }
         else if (target in privateMaps) {
-            if(playerIsGM(msg.playerid)) {
+            if (playerIsGM(msg.playerid)) {
                 // Move player.
-                if(sender in playerPages) {
+                if (sender in playerPages) {
                     delete playerPages[sender];
                 }
                 playerPages[sender] = privateMaps[target];
                 
                 if (gmNotify) {
-                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved to " + target);
+                    var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
+                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
                 }
             }
         }
