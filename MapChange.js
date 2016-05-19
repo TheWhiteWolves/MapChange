@@ -15,7 +15,7 @@
 //                                                provided name. (GM required for private maps)
 // Done * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
 //                                                map with the provided name. (GM Only)
-// Done * !mc menu                              - Provides a chat based menu for players to use to teleport.
+// Done * !mc menu [show]                       - Provides a chat based menu for players to use to teleport.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/4
 //      * !mc help                              - Display help on how to use the script.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/3
@@ -153,7 +153,16 @@ var MapChange = MapChange || (function() {
                 showHelp(msg);
                 break;
             case "menu":
-                showMenu(msg);
+                // Specify the default show behaviour to be "all".
+                var show = "all";
+                // Check to see if the show parameter was provided in the api call.
+                if (params.hasOwnProperty("show")) {
+                    // If it was then check that it is not empty and if it isn't then change show to 
+                    // the value of the parameter.
+                    show = (params.show !== "") ? params.show.toLowerCase() : "all";
+                }
+                // Show the menu to the sender of the api call with the applicable filters.
+                showMenu(msg, show);
                 break;
             case "refresh":
                 // Refresh the public and private maps to pull in any changes made since the script
@@ -163,7 +172,7 @@ var MapChange = MapChange || (function() {
             case "move":
                 // Check to see if the sender has provided and target map for the move, if they
                 // haven't then send them a chat message to tell them it is missing.
-                if(params.hasOwnProperty("target")) {
+                if (params.hasOwnProperty("target")) {
                     // Check to see if the sender has provided a player to be moved, if they 
                     // haven't then user the id of the sender.
                     if (params.hasOwnProperty("player")) {
@@ -211,68 +220,127 @@ var MapChange = MapChange || (function() {
         }
     },
 
+    // Convert the provided display name into the player id for that player.
     getPlayerIdFromDisplayName = function(name) {
+        // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'});
-        
+        // Loop through them and try to convert the display name into the player's id.
         for (var key in players) {
+            // Check if the current players display name is equal to the provided one.
             if (players[key].get("_displayname") === name) {
+                // If it is then return that players id.
                 return players[key].get("_id");
             }
         }
-        
+        // If no match was found then return undefined.
         return undefined;
     },
     
+    // Convert the provided player id into the display name for that player.
     getDisplayNameFromPlayerId = function(id) {
+        // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'})
-        
+        // Loop through them and try to convert the id into the player's display name.
         for (var key in players) {
+            // Check if the current players id is equal to the provided one.
             if (players[key].get("_id") == id) {
+                // If it is then return that players display name.
                 return players[key].get("_displayname");
             }
         }
-        
+        // If no match was found then return undefined.
         return undefined;
     },
 
+    // TODO
     showHelp = function(msg) {
         chat("/w", msg.who, "TODO: Add Help");
         log("TODO: Add Help");
     },
-
-    showMenu = function(msg) {
+    
+    // Displays a chat based menu for the teleportation, this provides users with  a set of
+    // easy to use api buttons in the chat that will launch the commands for them.
+    showMenu = function(msg, show) {
+        // Specify what the max display length of the map names will be on the api buttons.
         var displayLength = 20;
+        // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'});
-        var text = "Available Maps: ";
-        
-        for(var key in publicMaps) {
-            text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
-            if(playerIsGM(msg.playerid)) {
-                text += "[All](!mc moveall --target " + key + ")";
-                text += "[Other](!mc move --target " + key + " --player ?{Player";
-                for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
-                }
-                text += "})";
-            }
+        // Create the variable to hold the assembled menu text.
+        var text = "";
+        // Check if the show parameter is set to show any of the maps.
+        if (show === "all" || show === "public" || show === "private") {
+            // Start off the chat message with the Available Maps title.
+            text += "Available Maps: ";
         }
-                
-        if (playerIsGM(msg.playerid)) {
-            for(var key in privateMaps) {
+        // Check if the "show" parameter is set to either "all" or "public".
+        if (show === "all" || show === "public") {
+            // If it is then loop through the map displaying an api button for each one.
+            for(var key in publicMaps) {
+                // Generate an api button with the map name that will teleport the user to that map.
+                // If the map name is longer than 20 characters then trim it and add an elipse.
                 text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
-                text += "[All](!mc moveall --target " + key + ")";
-                text += "[Other](!mc move --target " + key + " --player ?{Player";
-                for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                // Check if the calling player is a GM or not.
+                if(playerIsGM(msg.playerid)) {
+                    // If they are then add extra GM only buttons.
+                    // Add a button to teleport all players to the chosen map.
+                    text += "[All](!mc moveall --target " + key + ")";
+                    // Add a button to teleport a differnet player to the chosen map.
+                    text += "[Other](!mc move --target " + key + " --player ?{Player";
+                    // Loop through the players in the campaign adding them to the dropdown for the Other command.
+                    for (var key in players) {
+                        // Add the current players name with any brackets replaced for their ASCII equivalents.
+                        text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                    }
+                    // Complete the Other api button.
+                    text += "})";
                 }
-                text += "})";
             }
         }
+        // Check if the "show" parameter is set to either "all" or "private".
+        if (show === "all" || show === "private") {
+            // If it is then check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then loop through the map displaying an api button for each one.
+                for(var key in privateMaps) {
+                    // Generate an api button with the map name that will teleport the user to that map.
+                    // If the map name is longer than 20 characters then trim it and add an elipse.
+                    text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
+                    // Add a button to teleport all players to the chosen map.
+                    text += "[All](!mc moveall --target " + key + ")";
+                    // Add a button to teleport a differnet player to the chosen map.
+                    text += "[Other](!mc move --target " + key + " --player ?{Player";
+                    // Loop through the players in the campaign adding them to the dropdown for the Other command.
+                    for (var key in players) {
+                        // Add the current players name with any brackets replaced for their ASCII equivalents.
+                        text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                    }
+                    // Complete the Other api button.
+                    text += "})";
+                }
+            }
+        }
+        // Check if the "show" paramter is set to either "all" or "utilities"/"utils".
+        if (show === "all" || show === "utilities" || show === "utils") {
+            // Add in the title for the utilities section.
+            text += "Utilities: ";
+            // Add an api button for the rejoin command.
+            text += "[Rejoin](!mc rejoin)";
+            // Check if the caller is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then add an api button for the map refresh command.
+                text += "[Refresh](!mc refresh)";
+            }
+            // Add an api button for the help command.
+            text += "[Help](!mc help)";
+        }
         
+        // Debug
         if(debug) {
+            log(show);
             log(text);
         }
         
+        // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
     },
 
