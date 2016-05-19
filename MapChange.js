@@ -15,7 +15,7 @@
 //                                                provided name. (GM required for private maps)
 // Done * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
 //                                                map with the provided name. (GM Only)
-//      * !mc menu                              - Provides a chat based menu for players to use to teleport.
+// Done * !mc menu                              - Provides a chat based menu for players to use to teleport.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/4
 //      * !mc help                              - Display help on how to use the script.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/3
@@ -228,7 +228,7 @@ var MapChange = MapChange || (function() {
         
         for (var key in players) {
             if (players[key].get("_id") == id) {
-                return players[key].get("_displayname").replace("(GM)", "");
+                return players[key].get("_displayname");
             }
         }
         
@@ -251,7 +251,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
+                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
                 }
                 text += "})";
             }
@@ -263,7 +263,7 @@ var MapChange = MapChange || (function() {
                 text += "[All](!mc moveall --target " + key + ")";
                 text += "[Other](!mc move --target " + key + " --player ?{Player";
                 for (var key in players) {
-                    text += "|" + players[key].get("_displayname").replace("(GM)", "").replace("(", "&#40;").replace(")", "&#41;");
+                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
                 }
                 text += "})";
             }
@@ -273,7 +273,7 @@ var MapChange = MapChange || (function() {
             log(text);
         }
         
-        chat("/w", msg.who.replace("(GM)", ""), text);
+        chat("/w", msg.who, text);
     },
 
     refresh = function(msg) {
@@ -284,7 +284,7 @@ var MapChange = MapChange || (function() {
         log("Refresh Complete");
         
         if (gmNotify) {
-            chat("/w", msg.who.replace("(GM)", ""), "Map Refresh Complete");
+            chat("/w", msg.who, "Map Refresh Complete");
         }
     },
     
@@ -310,7 +310,7 @@ var MapChange = MapChange || (function() {
             
             if (gmNotify) {
                 var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
-                chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
+                chat("/w", "gm", msg.who + " has moved " + playerAddition + "to " + target);
             }
         }
         else if (target in privateMaps) {
@@ -323,7 +323,7 @@ var MapChange = MapChange || (function() {
                 
                 if (gmNotify) {
                     var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
-                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
+                    chat("/w", "gm", msg.who + " has moved " + playerAddition + "to " + target);
                 }
             }
         }
@@ -382,9 +382,33 @@ var MapChange = MapChange || (function() {
     },
     
     chat = function(type, who, message) {
-        who = who.split(" ")[0];
+        who = who.split(" ")[0].replace("(GM)", "");
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
     },
+
+    // Converts the special character provided into its ASCII html code.
+    // Credit to The Aaron, Arcane Scriptomancer - https://app.roll20.net/users/104025/the-aaron
+    ch = function (c) {
+    	var entities = {
+			'<' : 'lt',
+			'>' : 'gt',
+			"'" : '#39',
+			'@' : '#64',
+			'{' : '#123',
+			'|' : '#124',
+			'}' : '#125',
+			'[' : '#91',
+			']' : '#93',
+			'"' : 'quot',
+			'-' : 'mdash',
+			' ' : 'nbsp'
+		};
+
+		if(_.has(entities,c) ){
+			return ('&'+entities[c]+';');
+		}
+		return '';
+	},
 
     registerEventHandlers = function() {
         on('chat:message', handleInput);
