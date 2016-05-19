@@ -310,7 +310,7 @@ var MapChange = MapChange || (function() {
             
             if (gmNotify) {
                 var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
-                chat("/w", "gm", msg.who + " has moved " + playerAddition + "to " + target);
+                chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
             }
         }
         else if (target in privateMaps) {
@@ -323,7 +323,7 @@ var MapChange = MapChange || (function() {
                 
                 if (gmNotify) {
                     var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
-                    chat("/w", "gm", msg.who + " has moved " + playerAddition + "to " + target);
+                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
                 }
             }
         }
@@ -350,7 +350,7 @@ var MapChange = MapChange || (function() {
         Campaign().set("playerspecificpages", playerPages);
         
         if (gmNotify) {
-            chat("/w", "gm", msg.who + " has rejoined the bookmark");
+            chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined the bookmark");
         }
     },
 
