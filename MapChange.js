@@ -270,7 +270,7 @@ var MapChange = MapChange || (function() {
         // Check if the show parameter is set to show any of the maps.
         if (show === "all" || show === "public" || show === "private") {
             // Start off the chat message with the Available Maps title.
-            text += "<tr><td style='text-align: left;'>Available Maps:</td></tr>";
+            text += "<tr><td style='text-align: left;' colspan='3'><strong><em>Available Maps:</em></strong></td></tr>";
         }
         // Check if the "show" parameter is set to either "all" or "public".
         if (show === "all" || show === "public") {
@@ -331,14 +331,14 @@ var MapChange = MapChange || (function() {
         // Check to see if the text is currently empty.
         if (text !== "") {
             // If it isn't then wrap the text within a set of table tags.
-            text = "<table  cellspacing='0' cellpadding='0'>" + text + "</table>";
+            text = "<table cellspacing='0' cellpadding='0'>" + text + "</table>";
         }
         // Check if the "show" paramter is set to either "all" or "utilities"/"utils".
         if (show === "all" || show === "utilities" || show === "utils") {
             // Add a table to start a new table.
-            text += "<table  cellspacing='0' cellpadding='0'>";
+            text += "<table <table cellspacing='0' cellpadding='0'>";
             // Add in the title for the utilities section.
-            text += "<tr><td style='text-align: left;'>Utilities:</td></tr>";
+            text += "<tr><td style='text-align: left;' colspan='4'><strong><em>Utilities:</em></strong></td></tr>";
             // Add a tag to start a new row for the utility commands.
             text += "<tr>";
             // Add an api button for the rejoin command.
@@ -497,7 +497,7 @@ var MapChange = MapChange || (function() {
     // Converts the special character provided into its ASCII html code.
     // Credit to The Aaron, Arcane Scriptomancer - https://app.roll20.net/users/104025/the-aaron
     ch = function (c) {
-    	var entities = {
+        var entities = {
 			'<' : 'lt',
 			'>' : 'gt',
 			"'" : '#39',
