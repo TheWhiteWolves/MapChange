@@ -270,30 +270,34 @@ var MapChange = MapChange || (function() {
         // Check if the show parameter is set to show any of the maps.
         if (show === "all" || show === "public" || show === "private") {
             // Start off the chat message with the Available Maps title.
-            text += "Available Maps: ";
+            text += "<tr><td style='text-align: left;'>Available Maps:</td></tr>";
         }
         // Check if the "show" parameter is set to either "all" or "public".
         if (show === "all" || show === "public") {
             // If it is then loop through the map displaying an api button for each one.
             for(var key in publicMaps) {
+                // Add a tag to open start a row on the table.
+                text += "<tr>";
                 // Generate an api button with the map name that will teleport the user to that map.
                 // If the map name is longer than 20 characters then trim it and add an elipse.
-                text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
+                text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                 // Check if the calling player is a GM or not.
                 if(playerIsGM(msg.playerid)) {
                     // If they are then add extra GM only buttons.
                     // Add a button to teleport all players to the chosen map.
-                    text += "[All](!mc moveall --target " + key + ")";
+                    text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
                     // Add a button to teleport a differnet player to the chosen map.
-                    text += "[Other](!mc move --target " + key + " --player ?{Player";
+                    text += "<td><a href='!mc move --target " + key + " --player ?{Player";
                     // Loop through the players in the campaign adding them to the dropdown for the Other command.
                     for (var key in players) {
                         // Add the current players name with any brackets replaced for their ASCII equivalents.
                         text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
                     }
                     // Complete the Other api button.
-                    text += "})";
+                    text += "}'>Other</a></td>";
                 }
+                // Add a closing tag to finish the row in the table.
+                text += "</tr>";
             }
         }
         // Check if the "show" parameter is set to either "all" or "private".
@@ -302,36 +306,61 @@ var MapChange = MapChange || (function() {
             if (playerIsGM(msg.playerid)) {
                 // If they are then loop through the map displaying an api button for each one.
                 for(var key in privateMaps) {
+                    // Add a tag to open start a row on the table.
+                    text += "<tr>";
                     // Generate an api button with the map name that will teleport the user to that map.
                     // If the map name is longer than 20 characters then trim it and add an elipse.
-                    text += "[" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "](!mc move --target " + key + ")";
+                    text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                     // Add a button to teleport all players to the chosen map.
-                    text += "[All](!mc moveall --target " + key + ")";
+                    text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
                     // Add a button to teleport a differnet player to the chosen map.
-                    text += "[Other](!mc move --target " + key + " --player ?{Player";
-                    // Loop through the players in the campaign adding them to the dropdown for the Other command.
+                    text += "<td><a href='!mc moveall --target " + key + " --player ?{Player";
+                    // Loop through the players in the campaign adding them to the dropdown for the command.
                     for (var key in players) {
                         // Add the current players name with any brackets replaced for their ASCII equivalents.
                         text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
                     }
                     // Complete the Other api button.
-                    text += "})";
+                    text += "}'>Other</a></td>";
+                    
+                    // Add a closing tag to finish the row in the table.
+                    text += "</tr>";
                 }
             }
         }
+        // Check to see if the text is currently empty.
+        if (text !== "") {
+            // If it isn't then wrap the text within a set of table tags.
+            text = "<table  cellspacing='0' cellpadding='0'>" + text + "</table>";
+        }
         // Check if the "show" paramter is set to either "all" or "utilities"/"utils".
         if (show === "all" || show === "utilities" || show === "utils") {
+            // Add a table to start a new table.
+            text += "<table  cellspacing='0' cellpadding='0'>";
             // Add in the title for the utilities section.
-            text += "Utilities: ";
+            text += "<tr><td style='text-align: left;'>Utilities:</td></tr>";
+            // Add a tag to start a new row for the utility commands.
+            text += "<tr>";
             // Add an api button for the rejoin command.
-            text += "[Rejoin](!mc rejoin)";
+            text += "<td><a href='!mc rejoin'>Rejoin</a><td>";
             // Check if the caller is a GM or not.
             if (playerIsGM(msg.playerid)) {
+                // Add an api button for the GM to force rejoin another player to the bookmark.
+                text += "<td><a href='!mc rejoin --player ?{Player";
+                // Loop through the players in the campaign adding them to the dropdown for the command.
+                for (var key in players) {
+                    // Add the current players name with any brackets replaced for their ASCII equivalents.
+                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                }
+                // Complete the Rejoin Other api button.
+                    text += "}'>Other</a></td>";
                 // If they are then add an api button for the map refresh command.
-                text += "[Refresh](!mc refresh)";
+                text += "<td><a href='!mc refresh'>Refresh</a><td>";
             }
             // Add an api button for the help command.
-            text += "[Help](!mc help)";
+            text += "<td><a href='!mc help'>Help</a><td>";
+            // Add a tag to close the table.
+            text += "</table>";
         }
         
         // Debug
@@ -406,6 +435,12 @@ var MapChange = MapChange || (function() {
 
     rejoin = function(msg, sender) {
         var playerPages = Campaign().get("playerspecificpages");
+        var differentSender = false;
+        
+        if (msg.playerid != sender) {
+            differentSender = true;
+        }
+        
         if (playerPages !== false) {
             if (sender in playerPages) {
                 delete playerPages[sender];
@@ -418,7 +453,12 @@ var MapChange = MapChange || (function() {
         Campaign().set("playerspecificpages", playerPages);
         
         if (gmNotify) {
-            chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined the bookmark");
+            if (differentSender) {
+                chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined " + getDisplayNameFromPlayerId(sender) + " with the bookmark")
+            }
+            else {
+                chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined the bookmark");
+            }
         }
     },
 
