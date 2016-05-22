@@ -149,8 +149,16 @@ var MapChange = MapChange || (function() {
         // Take the command and decide what function to run.
         switch (commands.shift().toLowerCase()) {
             case "help":
+                // Specify the default show behaviour to be "all".
+                var show = "index";
+                // Check to see if the show parameter was provided in the api call.
+                if (params.hasOwnProperty("show")) {
+                    // If it was then check that it is not empty and if it isn't then change show to 
+                    // the value of the parameter.
+                    show = (params.show !== "") ? params.show.toLowerCase() : "index";
+                }
                 // Send the help text to the player who sent the message.
-                showHelp(msg);
+                showHelp(msg, show);
                 break;
             case "menu":
                 // Specify the default show behaviour to be "all".
@@ -253,9 +261,154 @@ var MapChange = MapChange || (function() {
     },
 
     // TODO
-    showHelp = function(msg) {
-        chat("/w", msg.who, "TODO: Add Help");
-        log("TODO: Add Help");
+    showHelp = function(msg, show) {
+        if (debug) {
+            log(msg);
+            log(show);
+        }
+        // Create the variable to hold the assembled menu text.
+        var text = "";
+        // Assemble the text for the help menu.
+        if (show === "index") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the help menu.
+            text += "<tr><td style-'text-align: left;' colspan='3'><strong><em>Help Menu</em></strong></td></tr>";
+            // Add a heading row to provide names for the columns.
+            text += "<tr><td><strong>Command</strong></td><td colspan='2'><strong>Description</strong></td></tr>";
+            // Add a row for the menu command.
+            text += "<tr><td>menu</td><td>Menu for running commands.</td><td><a href='!mc help --show menu'>Info</a></td></tr>";
+            // Add a row for the move command.
+            text += "<tr><td>move</td><td>Moves a player to a map.</td><td><a href='!mc help --show move'>Info</a></td></tr>";
+            // Check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then add a row for the moveall command.
+                text += "<tr><td>moveall</td><td>Moves all players to a map.</td><td><a href='!mc help --show moveall'>Info</a></td></tr>";
+            }
+            // Add a row for the rejoin command.
+            text += "<tr><td>rejoin</td><td>Rejoins a player to the bookmark.</td><td><a href='!mc help --show rejoin'>Info</a></td></tr>";
+            // Check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then add a row for the refresh command.
+                text += "<tr><td>refresh</td><td>Refreshes the map lists.</td><td><a href='!mc help --show refresh'>Info</a></td></tr>";
+            }
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "menu") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Menu</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The menu command provides a menu for the user to launch commands that are available to them.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Add a row for the show parameter.
+            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>All<br>Public<br>Private<br>Utilities<br>Utils</td></tr>";
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc menu</td><td><a href='!mc menu'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "move") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Move</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The move command moves a player to the provided target map.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Add a row for the target parameter.
+            text += "<tr><td>--target</td><td><em>[Required]</em><br>The target map to move to.</td><td>Name of the Map</td></tr>";
+            // Check if the calling player is a GM or not.
+            if(playerIsGM(msg.playerid)) {
+                // If they are then add a row for the player parameter.
+                text += "<tr><td>--player</td><td><em>[Optional]</em><br>The player to move.</td><td>Player Name</td></tr>";
+            }
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc move --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc move --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "moveall") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Moveall</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The moveall command moves all players to the provided target map.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Add a row for the target parameter.
+            text += "<tr><td>--target</td><td><em>[Required]</em><br>The target map to move to.</td><td>Name of the Map</td></tr>";
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc moveall --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc moveall --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "rejoin") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Rejoin</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The rejoin command moves a player back to the bookmark.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Check if the calling player is a GM or not.
+            if(playerIsGM(msg.playerid)) {
+                // If they are then add a row for the player parameter.
+                text += "<tr><td>--player</td><td><em>[Optional]</em><br>The player to move.</td><td>Player Name</td></tr>";
+            }
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc rejoin</td><td><a href='!mc rejoin'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "refresh") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Refresh</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The refresh command clears and reloads the map lists without needing to restart the script.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc refresh</td><td><a href='!mc refresh'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        // Send the assembled menu text to the chat to be displayed.
+        chat("/w", msg.who, text);
     },
     
     // Displays a chat based menu for the teleportation, this provides users with  a set of
@@ -270,19 +423,19 @@ var MapChange = MapChange || (function() {
         // Check if the show parameter is set to show any of the maps.
         if (show === "all" || show === "public" || show === "private") {
             // Start off the chat message with the Available Maps title.
-            text += "<tr><td style='text-align: left;' colspan='3'><strong><em>Available Maps:</em></strong></td></tr>";
+            text += "<tr><td colspan='3'><strong><em>Available Maps:</em></strong></td></tr>";
         }
         // Check if the "show" parameter is set to either "all" or "public".
         if (show === "all" || show === "public") {
             // If it is then loop through the map displaying an api button for each one.
-            for(var key in publicMaps) {
+            for (var key in publicMaps) {
                 // Add a tag to open start a row on the table.
                 text += "<tr>";
                 // Generate an api button with the map name that will teleport the user to that map.
                 // If the map name is longer than 20 characters then trim it and add an elipse.
                 text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                 // Check if the calling player is a GM or not.
-                if(playerIsGM(msg.playerid)) {
+                if (playerIsGM(msg.playerid)) {
                     // If they are then add extra GM only buttons.
                     // Add a button to teleport all players to the chosen map.
                     text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
@@ -305,7 +458,7 @@ var MapChange = MapChange || (function() {
             // If it is then check if the calling player is a GM or not.
             if (playerIsGM(msg.playerid)) {
                 // If they are then loop through the map displaying an api button for each one.
-                for(var key in privateMaps) {
+                for (var key in privateMaps) {
                     // Add a tag to open start a row on the table.
                     text += "<tr>";
                     // Generate an api button with the map name that will teleport the user to that map.
@@ -331,18 +484,23 @@ var MapChange = MapChange || (function() {
         // Check to see if the text is currently empty.
         if (text !== "") {
             // If it isn't then wrap the text within a set of table tags.
-            text = "<table cellspacing='0' cellpadding='0'>" + text + "</table>";
+            text = "<table border='1' cellspacing='0' cellpadding='0'>" + text + "</table>";
+        }
+        // Check to see if the filter is set to display all.
+        if (show === "all") {
+            // Add in a blank line to seperate the menus.
+            text += "<br line-height='1'>";
         }
         // Check if the "show" paramter is set to either "all" or "utilities"/"utils".
         if (show === "all" || show === "utilities" || show === "utils") {
             // Add a table to start a new table.
-            text += "<table <table cellspacing='0' cellpadding='0'>";
+            text += "<table <table border='1' cellspacing='0' cellpadding='0'>";
             // Add in the title for the utilities section.
-            text += "<tr><td style='text-align: left;' colspan='4'><strong><em>Utilities:</em></strong></td></tr>";
+            text += "<tr><td colspan='4'><strong><em>Utilities:</em></strong></td></tr>";
             // Add a tag to start a new row for the utility commands.
             text += "<tr>";
             // Add an api button for the rejoin command.
-            text += "<td><a href='!mc rejoin'>Rejoin</a><td>";
+            text += "<td><a href='!mc rejoin'>Rejoin</a></td>";
             // Check if the caller is a GM or not.
             if (playerIsGM(msg.playerid)) {
                 // Add an api button for the GM to force rejoin another player to the bookmark.
@@ -355,10 +513,10 @@ var MapChange = MapChange || (function() {
                 // Complete the Rejoin Other api button.
                     text += "}'>Other</a></td>";
                 // If they are then add an api button for the map refresh command.
-                text += "<td><a href='!mc refresh'>Refresh</a><td>";
+                text += "<td><a href='!mc refresh'>Refresh</a></td>";
             }
             // Add an api button for the help command.
-            text += "<td><a href='!mc help'>Help</a><td>";
+            text += "<td><a href='!mc help'>Help</a></td>";
             // Add a tag to close the table.
             text += "</table>";
         }
@@ -524,7 +682,8 @@ var MapChange = MapChange || (function() {
 
     return {
         ConstructMaps: constructMaps,
-        RegisterEventHandlers: registerEventHandlers
+        RegisterEventHandlers: registerEventHandlers,
+        Debug: debug
     };
 }());
 
@@ -536,4 +695,8 @@ on("ready", function() {
     log("Maps Constructed");
     MapChange.RegisterEventHandlers();
     log("Map Change Ready");
+    
+    if (MapChange.Debug) {
+        sendChat("Map Change", "/w gm Map Change Ready");
+    }
 });
