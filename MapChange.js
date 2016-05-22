@@ -292,6 +292,22 @@ var MapChange = MapChange || (function() {
                 // If they are then add a row for the refresh command.
                 text += "<tr><td>refresh</td><td>Refreshes the map lists.</td><td><a href='!mc help --show refresh'>Info</a></td></tr>";
             }
+            //
+            text += "<tr><td>help</td><td>Shows the help for the script</td><td><a href='!mc help --show help'>Info</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+            // Add in a blank line to seperate the command information from the general information.
+            text += "<br line-height='1'>";
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add a header for the general information table.
+            text += "<tr><td colspan='3'><strong>General Information:</strong></td></tr>";
+            // 
+            text += "<tr><td>Constructing an api call</td><td><a href='!mc help --show api'>Info</a></td></tr>";
+            // 
+            text += "<tr><td>Using Parameters</td><td><a href='!mc help --show parameters'>Info</a></td></tr>";
+            // 
+            text += "<tr><td>Credits</td><td><a href='!mc help --show credits'>Info</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
         }
@@ -308,7 +324,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the parameters section headers.
             text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
             // Add a row for the show parameter.
-            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>All<br>Public<br>Private<br>Utilities<br>Utils</td></tr>";
+            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>All<br>Public<br>" + ((playerIsGM(msg.playerid)) ? "Private<br>" : "") + "Utilities<br>Utils</td></tr>";
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
@@ -403,6 +419,27 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
             text += "<tr><td colspan='2'>!mc refresh</td><td><a href='!mc refresh'>Show Me!</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "help") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Help</em></strong></td></tr>";
+            // Add a row for the description header.
+            text += "<tr><td colspan='3'><strong>Description</strong></td></tr>";
+            // Add a row for the description of the command.
+            text += "<tr><td colspan='3'>The help command provides an interactive menu for the documentation of the script.</td></tr>";
+            // Add a row for the parameters section headers.
+            text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
+            // Add a row for the show parameter.
+            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>Menu<br>Move<br>" + ((playerIsGM(msg.playerid)) ? "Moveall<br>" : "") + "Rejoin<br>" + ((playerIsGM(msg.playerid)) ? "Refresh<br>" : "") + "Help<br>Api<br>Parameters<br>Credits<br></td></tr>";
+            // Add a row for the example header.
+            text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
+            // Add a row with an example and an api button to launch that example.
+            text += "<tr><td colspan='2'>!mc help</td><td><a href='!mc help'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
         }
@@ -657,10 +694,6 @@ var MapChange = MapChange || (function() {
     chat = function(type, who, message) {
         who = who.split(" ")[0].replace("(GM)", "");
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
-    },
-
-    capitalise = function(text) {
-        return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();
     },
 
     registerEventHandlers = function() {
