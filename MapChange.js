@@ -113,7 +113,7 @@ var MapChange = MapChange || (function() {
                 }
                 else {
                     // Show the sender the script help message.
-                    showHelp(msg);
+                    showHelp(msg, "index");
                 }
                 break;
             default:
@@ -223,7 +223,7 @@ var MapChange = MapChange || (function() {
                 break;
             default:
                 // Show the scripts help text is no further command was provided.
-                showHelp(msg);
+                showHelp(msg, "index");
                 break;
         }
     },
@@ -331,7 +331,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the target parameter.
             text += "<tr><td>--target</td><td><em>[Required]</em><br>The target map to move to.</td><td>Name of the Map</td></tr>";
             // Check if the calling player is a GM or not.
-            if(playerIsGM(msg.playerid)) {
+            if (playerIsGM(msg.playerid)) {
                 // If they are then add a row for the player parameter.
                 text += "<tr><td>--player</td><td><em>[Optional]</em><br>The player to move.</td><td>Player Name</td></tr>";
             }
@@ -376,7 +376,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the parameters section headers.
             text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
             // Check if the calling player is a GM or not.
-            if(playerIsGM(msg.playerid)) {
+            if (playerIsGM(msg.playerid)) {
                 // If they are then add a row for the player parameter.
                 text += "<tr><td>--player</td><td><em>[Optional]</em><br>The player to move.</td><td>Player Name</td></tr>";
             }
@@ -427,7 +427,12 @@ var MapChange = MapChange || (function() {
         }
         // Check if the "show" parameter is set to either "all" or "public".
         if (show === "all" || show === "public") {
-            // If it is then loop through the map displaying an api button for each one.
+            // If it is then check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then add a row for the Public title.
+                text += "<tr><td colspan='3'><strong><em>Public</em></strong></td></tr>";
+            }
+            // Loop through the map displaying an api button for each one.
             for (var key in publicMaps) {
                 // Add a tag to open start a row on the table.
                 text += "<tr>";
@@ -444,7 +449,7 @@ var MapChange = MapChange || (function() {
                     // Loop through the players in the campaign adding them to the dropdown for the Other command.
                     for (var key in players) {
                         // Add the current players name with any brackets replaced for their ASCII equivalents.
-                        text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                        text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
                     }
                     // Complete the Other api button.
                     text += "}'>Other</a></td>";
@@ -457,7 +462,9 @@ var MapChange = MapChange || (function() {
         if (show === "all" || show === "private") {
             // If it is then check if the calling player is a GM or not.
             if (playerIsGM(msg.playerid)) {
-                // If they are then loop through the map displaying an api button for each one.
+                // If they are then add a row for the Private title..
+                text += "<tr><td colspan='3'><strong><em>Private</em></strong></td></tr>";
+                // Loop through the map displaying an api button for each one.
                 for (var key in privateMaps) {
                     // Add a tag to open start a row on the table.
                     text += "<tr>";
@@ -471,7 +478,7 @@ var MapChange = MapChange || (function() {
                     // Loop through the players in the campaign adding them to the dropdown for the command.
                     for (var key in players) {
                         // Add the current players name with any brackets replaced for their ASCII equivalents.
-                        text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                        text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
                     }
                     // Complete the Other api button.
                     text += "}'>Other</a></td>";
@@ -508,7 +515,7 @@ var MapChange = MapChange || (function() {
                 // Loop through the players in the campaign adding them to the dropdown for the command.
                 for (var key in players) {
                     // Add the current players name with any brackets replaced for their ASCII equivalents.
-                    text += "|" + players[key].get("_displayname").replace("(", ch("(")).replace(")", ch(")"));
+                    text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
                 }
                 // Complete the Rejoin Other api button.
                     text += "}'>Other</a></td>";
@@ -522,7 +529,7 @@ var MapChange = MapChange || (function() {
         }
         
         // Debug
-        if(debug) {
+        if (debug) {
             log(show);
             log(text);
         }
@@ -558,7 +565,7 @@ var MapChange = MapChange || (function() {
         
         if (target in publicMaps) {
             // Move player.
-            if(sender in playerPages) {
+            if (sender in playerPages) {
                 delete playerPages[sender];
             }
             playerPages[sender] = publicMaps[target];
@@ -652,29 +659,9 @@ var MapChange = MapChange || (function() {
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
     },
 
-    // Converts the special character provided into its ASCII html code.
-    // Credit to The Aaron, Arcane Scriptomancer - https://app.roll20.net/users/104025/the-aaron
-    ch = function (c) {
-        var entities = {
-			'<' : 'lt',
-			'>' : 'gt',
-			"'" : '#39',
-			'@' : '#64',
-			'{' : '#123',
-			'|' : '#124',
-			'}' : '#125',
-			'[' : '#91',
-			']' : '#93',
-			'"' : 'quot',
-			'-' : 'mdash',
-			' ' : 'nbsp'
-		};
-
-		if(_.has(entities,c) ){
-			return ('&'+entities[c]+';');
-		}
-		return '';
-	},
+    capitalise = function(text) {
+        return text.charAt(0).toUpperCase() + text.substring(1).toLowerCase();
+    },
 
     registerEventHandlers = function() {
         on('chat:message', handleInput);
