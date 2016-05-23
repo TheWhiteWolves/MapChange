@@ -40,7 +40,7 @@ var MapChange = MapChange || (function() {
     // Date last modified in unix timestamp format.
     var lastModified = "1464003099";
     // Name of the person who last modified the script.
-    var modifiedBy = "TheWhiteWovles"
+    var modifiedBy = "TheWhiteWolves"
     // Config
     // Set to true to use built in debug statements
     var debug = true;
