@@ -303,7 +303,7 @@ var MapChange = MapChange || (function() {
             // Add a header for the general information table.
             text += "<tr><td colspan='3'><strong>General Information:</strong></td></tr>";
             // 
-            text += "<tr><td>Constructing an api call</td><td><a href='!mc help --show api'>Info</a></td></tr>";
+            text += "<tr><td>Constructing an API call</td><td><a href='!mc help --show api'>Info</a></td></tr>";
             // 
             text += "<tr><td>Using Parameters</td><td><a href='!mc help --show parameters'>Info</a></td></tr>";
             // 
@@ -444,6 +444,46 @@ var MapChange = MapChange || (function() {
             text += "</table>";
         }
         
+        if (show === "api") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Constructing an API call</em></strong></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "parameters") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the move help.
+            text += "<tr><td colspan='3'><strong><em>Using Paramters</em></strong></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
+        
+        if (show === "credits") {
+            // Declare the styling for the profile link, this makes it look like an api button.
+            var buttonStyle = "background-color: #CE0F69; color: white; padding: 5px 6px; text-decoration: none; display: inline-block; font-family: Arial;";
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the credits.
+            text += "<tr><td colspan='2'><strong><em>Credits</em></strong></td></tr>";
+            // Add in the header row for the authors.
+            text += "<tr><td colspan='2'><strong>Authors</strong></td></tr>";
+            // Add in in TheWhiteWolves as an author.
+            text += "<tr><td>TheWhiteWolves</td><td><a style='" + buttonStyle + "' href='https://app.roll20.net/users/1043/thewhitewolves'>Profile</a></td></tr>";
+            // Add in the header row for the testers.
+            text += "<tr><td colspan='2'><strong>Testers</strong></td></tr>";
+            // Add in in WhiteStar as a tester.
+            text += "<tr><td>WhiteStar</td><td><a style='" + buttonStyle + "' href='https://app.roll20.net/users/484663/whitestar'>Profile</a></td></tr>";
+            // Add in in Kaelev as a tester.
+            text += "<tr><td>Kaelev</td><td><a style='" + buttonStyle + "' href='https://app.roll20.net/users/618858/kaelev'>Profile</a></td></tr>";
+            // Add in in Enzo S.as a tester.
+            text += "<tr><td>Enzo S.</td><td><a style='" + buttonStyle + "' href='https://app.roll20.net/users/1191835/enzo-s'>Profile</a></td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
         // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
     },
