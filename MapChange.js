@@ -17,7 +17,7 @@
 //                                                map with the provided name. (GM Only)
 // Done * !mc menu [show]                       - Provides a chat based menu for players to use to teleport.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/4
-//      * !mc help                              - Display help on how to use the script.
+// Done * !mc help                              - Display help on how to use the script.
 //                                                See https://github.com/TheWhiteWolves/MapChange/issues/3
 
 // Note for Users: When usng a command from the list above that wants you to specify a parameter you need to use
@@ -35,23 +35,29 @@
 
 var MapChange = MapChange || (function() {
     'use strict';
+    // Version number
+    var version = "1.00";
+    // Date last modified in unix timestamp format.
+    var lastModified = "1464003099";
+    // Name of the person who last modified the script.
+    var modifiedBy = "TheWhiteWovles"
     // Config
     // Set to true to use built in debug statements
-    var debug = true,
+    var debug = true;
     // Set to false to turn off notifing the GM when a player moves.
-    gmNotify = true,
+    var gmNotify = true;
     // When true places the pages with name containing the marker into the public list.
     // Use this if you want maps to be private by default instead of public by default.
-    invertedMarker = false,
+    var invertedMarker = false;
     // The marker used to decide what is placed in the private map.
-    marker = "[GM]",
+    var marker = "[GM]";
     // These are maps that players are able to move to using the commands.
-    publicMaps = {},
+    var publicMaps = {};
     // These are maps that only the GM can move people to.
-    privateMaps = {},
+    var privateMaps = {};
     
     // Constructs the private and public maps for use in the api script.
-    constructMaps = function() {
+    var constructMaps = function() {
         // Get an object containing all the pages in the campaign.
         var pages = findObjs({_type: 'page'});
         
@@ -84,10 +90,10 @@ var MapChange = MapChange || (function() {
             log("Private:");
             log(privateMaps);
         }
-    },
+    };
     
     // Handle the input message call for the api from the chat event.
-    handleInput = function(msg) {
+    var handleInput = function(msg) {
         // Check that the message sent is for the api, if not return as we don't need to do anything.
         if (msg.type !== "api") {
             return;
@@ -120,16 +126,16 @@ var MapChange = MapChange || (function() {
                 // If we reached here it means that the call to the api was not meant for us.
                 return;
         }
-    },
+    };
     
     // Parses the commands of the call to the api script.
-    parseCommands = function(args) {
+    var parseCommands = function(args) {
         // Split the arguments by spaces and return the array containing them all.
         return args.split(/\s+/);
-    },
+    };
     
     // Parses the parameters of the call to the api script.
-    parseParameters = function(args) {
+    var parseParameters = function(args) {
         // Declare a new object to hold the parameters.
         var params = {};
         // Loop through all the passed in arguments and construct them in into the parameters.
@@ -142,10 +148,10 @@ var MapChange = MapChange || (function() {
         }
         // Return the constructed object of parameters.
         return params;
-    },
+    };
     
     // Processes the commands provided in the call to the api script.
-    processCommands = function(msg, commands, params) {
+    var processCommands = function(msg, commands, params) {
         // Take the command and decide what function to run.
         switch (commands.shift().toLowerCase()) {
             case "help":
@@ -226,10 +232,10 @@ var MapChange = MapChange || (function() {
                 showHelp(msg, "index");
                 break;
         }
-    },
+    };
 
     // Convert the provided display name into the player id for that player.
-    getPlayerIdFromDisplayName = function(name) {
+    var getPlayerIdFromDisplayName = function(name) {
         // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'});
         // Loop through them and try to convert the display name into the player's id.
@@ -242,10 +248,10 @@ var MapChange = MapChange || (function() {
         }
         // If no match was found then return undefined.
         return undefined;
-    },
+    };
     
     // Convert the provided player id into the display name for that player.
-    getDisplayNameFromPlayerId = function(id) {
+    var getDisplayNameFromPlayerId = function(id) {
         // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'})
         // Loop through them and try to convert the id into the player's display name.
@@ -258,14 +264,10 @@ var MapChange = MapChange || (function() {
         }
         // If no match was found then return undefined.
         return undefined;
-    },
+    };
 
     // TODO
-    showHelp = function(msg, show) {
-        if (debug) {
-            log(msg);
-            log(show);
-        }
+    var showHelp = function(msg, show) {
         // Create the variable to hold the assembled menu text.
         var text = "";
         // Assemble the text for the help menu.
@@ -292,7 +294,7 @@ var MapChange = MapChange || (function() {
                 // If they are then add a row for the refresh command.
                 text += "<tr><td>refresh</td><td>Refreshes the map lists.</td><td><a href='!mc help --show refresh'>Info</a></td></tr>";
             }
-            //
+            // Add a row for the help command.
             text += "<tr><td>help</td><td>Shows the help for the script</td><td><a href='!mc help --show help'>Info</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
@@ -301,17 +303,19 @@ var MapChange = MapChange || (function() {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
             // Add a header for the general information table.
-            text += "<tr><td colspan='3'><strong>General Information:</strong></td></tr>";
-            // 
+            text += "<tr><td colspan='2'><strong>General Information:</strong></td></tr>";
+            // Add a row for the information on constructing an API call.
             text += "<tr><td>Constructing an API call</td><td><a href='!mc help --show api'>Info</a></td></tr>";
-            // 
-            text += "<tr><td>Using Parameters</td><td><a href='!mc help --show parameters'>Info</a></td></tr>";
-            // 
+            // Add a row for the information on using parameters.
+            text += "<tr><td>Using Parameters</td><td><a href='!mc help --show params'>Info</a></td></tr>";
+            // Add a row for the credits.
             text += "<tr><td>Credits</td><td><a href='!mc help --show credits'>Info</a></td></tr>";
+            // Add a row for the version information.
+            text += "<tr><td>Version</td><td><a href='!mc help --show version'>Info</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the menu documentation.
         if (show === "menu") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -332,7 +336,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the move documentation.
         if (show === "move") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -358,7 +362,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the moveall documentation.
         if (show === "moveall") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -379,7 +383,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the rejoin documentation.
         if (show === "rejoin") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -403,7 +407,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the refresh documentation.
         if (show === "refresh") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -422,7 +426,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the help documentation.
         if (show === "help") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
@@ -435,7 +439,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the parameters section headers.
             text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
             // Add a row for the show parameter.
-            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>Menu<br>Move<br>" + ((playerIsGM(msg.playerid)) ? "Moveall<br>" : "") + "Rejoin<br>" + ((playerIsGM(msg.playerid)) ? "Refresh<br>" : "") + "Help<br>Api<br>Parameters<br>Credits<br></td></tr>";
+            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>Menu<br>Move<br>" + ((playerIsGM(msg.playerid)) ? "Moveall<br>" : "") + "Rejoin<br>" + ((playerIsGM(msg.playerid)) ? "Refresh<br>" : "") + "Help<br>Api<br>Params<br>Credits<br>Version</td></tr>";
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
@@ -443,28 +447,49 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the constructing an API documentation.
         if (show === "api") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
-            // Add in the header row for the move help.
+            // Add in the header row for the constructing an api call information.
             text += "<tr><td colspan='3'><strong><em>Constructing an API call</em></strong></td></tr>";
+            // Add the decription on how to construct an api call.
+            text += "<tr><td colspan='3'>An API call in MapChange consists of two required components and one optional component.<br><br>\
+                                         The first required component is the call to the script, this is started by using a exclamation \
+                                         mark followed by the script name or alias (e.g. !mc or !mapchange)<br><br>\
+                                         The second required component is the command for the script, this must be seperated from the \
+                                         script call marker by using a space. (e.g. !mc help)<br><br>\
+                                         Finally the optional component is the parameters for the command you are using, this is started by \
+                                         using two dashes (e.g. --show), note that sometimes a command may allow or require more than one \
+                                         parameter.<br>As with the command this must be seperated from the command using a space and each \
+                                         parameter must be seperated using a space. (e.g. !mc help --show index)</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
-        if (show === "parameters") {
+        // Assemble the text for the using parameters documentation.
+        if (show === "params") {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
-            // Add in the header row for the move help.
-            text += "<tr><td colspan='3'><strong><em>Using Paramters</em></strong></td></tr>";
+            // Add in the header row for the using parameters information.
+            text += "<tr><td colspan='3'><strong><em>Using Parameters</em></strong></td></tr>";
+            // Add in a row for the information on parameters.
+            text += "<tr><td colspan='3'>Parameters in MapChange are composed of threee pieces, the first is the Parameter Marker, the second \
+                                         is the Parameter Name and the third is the Parameter Value.<br><br>\
+                                         The Parameter Marker consists of two dashes (e.g. --), this allows the script to know that the \
+                                         following text is a parameter.<br><br>\
+                                         The Parameter Name is the name that the script will use when applying it to the command (e.g. show), see \
+                                         the help on each command to find out what parameters they accept.<br><br>\
+                                         The Parameter Value is the piece of information or option you pass to the script to use with the \
+                                         Parameter.<br>\
+                                         Some commands only accept a set amount of options whereas others will accept what the user sends and \
+                                         attempt to use it, see the help on each command to find out what can be used with each parameter.</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
         }
-        
+        // Assemble the text for the credits.
         if (show === "credits") {
             // Declare the styling for the profile link, this makes it look like an api button.
-            var buttonStyle = "background-color: #CE0F69; color: white; padding: 5px 6px; text-decoration: none; display: inline-block; font-family: Arial;";
+            var buttonStyle = "background-color: #CE0F69; color: white; padding: 6px 6px; text-decoration: none; display: inline-block; font-family: Arial;";
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
             // Add in the header row for the credits.
@@ -484,13 +509,32 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
         }
+        // Assemble the text for the version information.
+        if (show === "version") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add a row for the version number.
+            text += "<tr><td><strong>Version</strong></td><td>" + version + "</td></tr>";
+            // Add a row for the last modified date and time.
+            text += "<tr><td><strong>Last Modified</strong></td><td>" + new Date(lastModified * 1000).toUTCString() + "</td></tr>";
+            // Add a row for who last modified the script.
+            text += "<tr><td><strong>By</strong></td><td>" + modifiedBy + "</td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+        }
         // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
-    },
+        // Debug
+        if (debug) {
+            log(msg);
+            log(text);
+            log(show);
+        }
+    };
     
     // Displays a chat based menu for the teleportation, this provides users with  a set of
     // easy to use api buttons in the chat that will launch the commands for them.
-    showMenu = function(msg, show) {
+    var showMenu = function(msg, show) {
         // Specify what the max display length of the map names will be on the api buttons.
         var displayLength = 20;
         // Find all the player objects in the campaign.
@@ -604,18 +648,16 @@ var MapChange = MapChange || (function() {
             // Add a tag to close the table.
             text += "</table>";
         }
-        
         // Debug
         if (debug) {
             log(show);
             log(text);
         }
-        
         // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
-    },
+    };
 
-    refresh = function(msg) {
+    var refresh = function(msg) {
         log("Refreshing Maps...");
         publicMaps = {};
         privateMaps = {};
@@ -625,9 +667,9 @@ var MapChange = MapChange || (function() {
         if (gmNotify) {
             chat("/w", msg.who, "Map Refresh Complete");
         }
-    },
+    };
     
-    move = function(msg, sender, target) {
+    var move = function(msg, sender, target) {
         var pages = findObjs({_type: 'page'});
         var playerPages = Campaign().get("playerspecificpages");
         var differentSender = false;
@@ -673,9 +715,9 @@ var MapChange = MapChange || (function() {
         
         Campaign().set("playerspecificpages", false);
         Campaign().set("playerspecificpages", playerPages);
-    },
+    };
 
-    rejoin = function(msg, sender) {
+    var rejoin = function(msg, sender) {
         var playerPages = Campaign().get("playerspecificpages");
         var differentSender = false;
         
@@ -702,9 +744,9 @@ var MapChange = MapChange || (function() {
                 chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined the bookmark");
             }
         }
-    },
+    };
 
-    moveall = function(msg, target) {
+    var moveall = function(msg, target) {
         if (playerIsGM(msg.playerid)) {
             var bookmarkPage = Campaign().get("playerpageid");
             if (target in publicMaps) {
@@ -729,14 +771,14 @@ var MapChange = MapChange || (function() {
             
             Campaign().set("playerpageid", bookmarkPage);
         }
-    },
+    };
     
-    chat = function(type, who, message) {
-        who = who.split(" ")[0].replace("(GM)", "");
+    var chat = function(type, who, message) {
+        who = who.split(" ")[0].replace(" (GM)", "");
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
-    },
+    };
 
-    registerEventHandlers = function() {
+    var registerEventHandlers = function() {
         on('chat:message', handleInput);
     };
 
