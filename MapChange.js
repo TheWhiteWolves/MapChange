@@ -38,7 +38,7 @@ var MapChange = MapChange || (function() {
     // Version number
     var version = "1.00";
     // Date last modified in unix timestamp format.
-    var lastModified = "1464003099";
+    var lastModified = "1464081972";
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves"
     // Config
@@ -335,6 +335,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc menu</td><td><a href='!mc menu'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("", "move");
         }
         // Assemble the text for the move documentation.
         if (show === "move") {
@@ -361,6 +363,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc move --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc move --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("menu", "moveall");
         }
         // Assemble the text for the moveall documentation.
         if (show === "moveall") {
@@ -382,6 +386,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc moveall --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc moveall --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("move", "rejoin");
         }
         // Assemble the text for the rejoin documentation.
         if (show === "rejoin") {
@@ -406,6 +412,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc rejoin</td><td><a href='!mc rejoin'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("moveall", "refresh");
         }
         // Assemble the text for the refresh documentation.
         if (show === "refresh") {
@@ -425,6 +433,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc refresh</td><td><a href='!mc refresh'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("rejoin", "help");
         }
         // Assemble the text for the help documentation.
         if (show === "help") {
@@ -446,6 +456,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td colspan='2'>!mc help</td><td><a href='!mc help'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("refresh", "");
         }
         // Assemble the text for the constructing an API documentation.
         if (show === "api") {
@@ -461,10 +473,12 @@ var MapChange = MapChange || (function() {
                                          script call marker by using a space. (e.g. !mc help)<br><br>\
                                          Finally the optional component is the parameters for the command you are using, this is started by \
                                          using two dashes (e.g. --show), note that sometimes a command may allow or require more than one \
-                                         parameter.<br>As with the command this must be seperated from the command using a space and each \
+                                         parameter.<br><br>As with the command this must be seperated from the command using a space and each \
                                          parameter must be seperated using a space. (e.g. !mc help --show index)</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("", "params");
         }
         // Assemble the text for the using parameters documentation.
         if (show === "params") {
@@ -473,18 +487,20 @@ var MapChange = MapChange || (function() {
             // Add in the header row for the using parameters information.
             text += "<tr><td colspan='3'><strong><em>Using Parameters</em></strong></td></tr>";
             // Add in a row for the information on parameters.
-            text += "<tr><td colspan='3'>Parameters in MapChange are composed of threee pieces, the first is the Parameter Marker, the second \
+            text += "<tr><td colspan='3'>Parameters in MapChange are composed of three pieces, the first is the Parameter Marker, the second \
                                          is the Parameter Name and the third is the Parameter Value.<br><br>\
                                          The Parameter Marker consists of two dashes (e.g. --), this allows the script to know that the \
                                          following text is a parameter.<br><br>\
                                          The Parameter Name is the name that the script will use when applying it to the command (e.g. show), see \
                                          the help on each command to find out what parameters they accept.<br><br>\
                                          The Parameter Value is the piece of information or option you pass to the script to use with the \
-                                         Parameter.<br>\
+                                         Parameter.<br><br>\
                                          Some commands only accept a set amount of options whereas others will accept what the user sends and \
                                          attempt to use it, see the help on each command to find out what can be used with each parameter.</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("api", "credits");
         }
         // Assemble the text for the credits.
         if (show === "credits") {
@@ -508,6 +524,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td>Enzo S.</td><td><a style='" + buttonStyle + "' href='https://app.roll20.net/users/1191835/enzo-s'>Profile</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("params", "version");
         }
         // Assemble the text for the version information.
         if (show === "version") {
@@ -521,6 +539,8 @@ var MapChange = MapChange || (function() {
             text += "<tr><td><strong>By</strong></td><td>" + modifiedBy + "</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("credits", "");
         }
         // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
@@ -776,6 +796,45 @@ var MapChange = MapChange || (function() {
     var chat = function(type, who, message) {
         who = who.split(" ")[0].replace(" (GM)", "");
         sendChat("MapChange", type + " " + who + " " + message, {noarchive:true});
+    };
+    
+    var navigation = function(prev, next) {
+        // Create a varaible to hold the total colspan for the title bar.
+        var colspan = 1;
+        // Check if prev is not empty.
+        if (prev !== "") {
+            // If it is then increment colspan.
+            colspan += 1;
+        }
+        // Check if next is not empty.
+        if (next !== "") {
+            // If it is then increment colspan.
+            colspan += 1;
+        }
+        // Add in a blank line to seperate the information from the back button.
+        var text = "<br line-height='1'>";
+        // Add in a new table for the back button.
+        text += "<table border='1' cellspacing='2' cellpadding='4'>";
+        // Add in the title row for the navigation bar.
+        text += "<tr><td colspan='" + colspan + "'><strong><em>Navigation<em></strong></td></tr>";
+        // Add the opening tag for the row.
+        text += "<tr>";
+        // Check if prev is not empty.
+        if (prev !== "") {
+            // If it is then add a table element in for the previous button.
+            text += "<td><a href='!mc help --show " + prev + "'>Previous</a></td>";
+        }
+        // Add in the row for the back button.
+        text += "<td><a href='!mc help'>Back</a></td>";
+        // Check if next is not empty.
+        if (next !== "") {
+            // If it is then add a table element in for the next button.
+            text += "<td><a href='!mc help --show " + next + "'>Next</a></td>";
+        }
+        // Add the closing tag for the table.
+        text += "</tr></table>";
+        // Return the assembled text.
+        return text;
     };
 
     var registerEventHandlers = function() {
