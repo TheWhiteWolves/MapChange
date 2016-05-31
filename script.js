@@ -33,7 +33,11 @@
     },
   ],
   "dependencies": [],
-  "modifies": {},
+  "modifies": {
+    "Campaign.playerpageid": "read,write",
+ +  "Campaign.playerspecificpages": "read,write",
+    "state.MapChange": "read,write"
+  },
   "conflicts": [],
   "previousversions": []
 }
