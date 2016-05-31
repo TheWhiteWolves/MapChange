@@ -2,59 +2,61 @@
 // By:       TheWhiteWolves
 // Contact:  https://app.roll20.net/users/1043/thewhitewolves
 
-// TODO List:
-// * Add more options to commands
-// Done * !mc refresh                           - Refreshes the public and private maps.
-// Done * !mc rejoin                            - Removes the senders's playerspecificpages entry and moves 
-//                                                them back to the global players tab.
-// Done * !mc rejoin [player name]              - Removes the provided player's playerspecificpages entry and  
-//                                                moves them back to the global players tab.
-// Done * !mc move [map name]                   - Moves te sender to the map with the provided name.
-//                                                (GM required for private maps)
-// Done * !mc move [player name] [map name]     - Moves the sender with the provided name to the map with the 
-//                                                provided name. (GM required for private maps)
-// Done * !mc moveall [map name]                - Empties playerspecificpages and moves all players to the
-//                                                map with the provided name. (GM Only)
-// Done * !mc menu [show]                       - Provides a chat based menu for players to use to teleport.
-//                                                See https://github.com/TheWhiteWolves/MapChange/issues/4
-// Done * !mc help                              - Display help on how to use the script.
-//                                                See https://github.com/TheWhiteWolves/MapChange/issues/3
-
-// Note for Users: When usng a command from the list above that wants you to specify a parameter you need to use
-// --player [player name] for the name of the player and --target [map name] for the name of the map.
-
-// e.g. !mc move --player TheWhiteWolves --target Forest of Boland
-
-// The name and the parameter marker must be seperated by a space and each parameter set must be seperated by a space,
-// it is ok to have spaces the the map or player names, see the map name in the example.
-
-// Also note that when you are in the GM view (i.e. logged in as GM) the move commands will not change your view,
-// it is only able to change the view from the players perspective, so if you goto My Settings > Join as Player when in
-// your campaign you will see it has changed your view as a player but not as a GM.
-// See https://github.com/TheWhiteWolves/MapChange/issues/5
-
 var MapChange = MapChange || (function() {
     'use strict';
-    // Version number
-    var version = "1.00";
-    // Date last modified in unix timestamp format.
-    var lastModified = "1464081972";
-    // Name of the person who last modified the script.
-    var modifiedBy = "TheWhiteWolves"
-    // Config
-    // Set to true to use built in debug statements
-    var debug = true;
-    // Set to false to turn off notifing the GM when a player moves.
-    var gmNotify = true;
-    // When true places the pages with name containing the marker into the public list.
-    // Use this if you want maps to be private by default instead of public by default.
-    var invertedMarker = false;
-    // The marker used to decide what is placed in the private map.
-    var marker = "[GM]";
-    // These are maps that players are able to move to using the commands.
-    var publicMaps = {};
-    // These are maps that only the GM can move people to.
-    var privateMaps = {};
+    // Local version of the script.
+    var version = "1.0";
+    // Check the installation of the script and setup the default configs.
+    var checkInstall = function() {
+        if (!state.MapChange || state.MapChange.version !== version) {
+            state.MapChange = state.MapChange || {};
+            state.MapChange = {
+                // Version number
+                version: version,
+                // Date last modified in unix timestamp format.
+                lastModified: "1464698943",
+                // Name of the person who last modified the script.
+                modifiedBy: "TheWhiteWolves",
+                // Timestamp when the global config was last updated.
+                gcUpdated: 0,
+                // List of available user configs.
+                config: {
+                    // Set to true to use built in debug statements
+                    debug: true,
+                    // Set to false to turn off notifing the GM when a player moves.
+                    gmNotify: true,
+                    // The marker used to decide what is placed in the private map.
+                    marker: "[GM]",
+                    // When true this places the pages with name containing the marker into the public list.
+                    // Use this if you want maps to be private by default instead of public by default.
+                    invertedMarker: false
+                },
+                // These are maps that players are able to move to using the commands.
+                publicMaps: {},
+                // These are maps that only the GM can move people to.
+                privateMaps: {}
+            }
+        }
+        // Load and changes to the defaults from the global config.
+        loadGlobalConfig();
+    };
+    
+    var loadGlobalConfig = function() {
+        var gc = globalconfig && globalconfig.mapchange;
+        var st = state.MapChange;
+            
+        if (gc && gc.lastsaved && gc.lastsaved > st.gcUpdated) {
+            st.gcUpdated = gc.lastsaved;
+            st.config.debug = JSON.parse(gc['Debug Mode']) === false;
+            st.config.gmNotify = JSON.parse(gc['GM Notification']) === true;
+            st.config.invertedMarker = gc['Marker'] === "[GM]";
+            st.config.marker = JSON.parse(gc['Inverted Marker']) === false;
+        }
+        
+        if (st.config.debug) {
+            log(st.config);
+        }
+    };
     
     // Constructs the private and public maps for use in the api script.
     var constructMaps = function() {
@@ -69,26 +71,25 @@ var MapChange = MapChange || (function() {
             var id = pages[key].get("_id");
             
             // Check if the name of the page contains the marker.
-            if (name.indexOf(marker) > -1) {
+            if (name.indexOf(state.MapChange.config.marker) > -1) {
                 // If the name does then remove the marker from the name and trim off any whitespace.
-                name = name.replace(marker, "").trim();
+                name = name.replace(state.MapChange.config.marker, "").trim();
                 // If invertedMarker is being used then place the name and id of the page in the 
                 // public map else place it in the private map.
-                invertedMarker ? publicMaps[name] = id : privateMaps[name] = id;
+                state.MapChange.config.invertedMarker ? state.MapChange.publicMaps[name] = id : state.MapChange.privateMaps[name] = id;
             }
             else {
                 // If the name does not contain the marker then place the name and id in the public map
                 // if invertedMarker is being used else place it in the private map.
-                invertedMarker ? privateMaps[name] = id : publicMaps[name] = id;
+                state.MapChange.config.invertedMarker ? state.MapChange.privateMaps[name] = id : state.MapChange.publicMaps[name] = id;
             }
         }
-        
         // Debug
-        if (debug) {
+        if (state.MapChange.config.debug) {
             log("Public:");
-            log(publicMaps);
+            log(state.MapChange.publicMaps);
             log("Private:");
-            log(privateMaps);
+            log(state.MapChange.privateMaps);
         }
     };
     
@@ -98,14 +99,12 @@ var MapChange = MapChange || (function() {
         if (msg.type !== "api") {
             return;
         }
-        
         // Grab the contents of the msg sent and split it into the individual arguments.
         var args = msg.content.split(/\s+--/);
         // Parse the first section of the arguments to get an array containing the commands.
         var commands = parseCommands(args.shift());
         // Parse the remaining aruments to get any parameters passed in.
         var params = parseParameters(args);
-        
         // Check the lower cased version of the message to see if it contains the call for
         // this script to run, if it doesn't then return.
         switch (commands.shift().toLowerCase()) {
@@ -360,7 +359,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
-            text += "<tr><td colspan='2'>!mc move --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc move --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            text += "<tr><td colspan='2'>!mc move --target " + _.keys(state.MapChange.publicMaps)[0] + "</td><td><a href='!mc move --target " + _.keys(state.MapChange.publicMaps)[0] + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
@@ -383,7 +382,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
-            text += "<tr><td colspan='2'>!mc moveall --target " + _.keys(publicMaps)[0] + "</td><td><a href='!mc moveall --target " + _.keys(publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            text += "<tr><td colspan='2'>!mc moveall --target " + _.keys(state.MapChange.publicMaps)[0] + "</td><td><a href='!mc moveall --target " + _.keys(state.MapChange.publicMaps)[0] + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
@@ -532,11 +531,11 @@ var MapChange = MapChange || (function() {
             // Add the opening tag for the table.
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
             // Add a row for the version number.
-            text += "<tr><td><strong>Version</strong></td><td>" + version + "</td></tr>";
+            text += "<tr><td><strong>Version</strong></td><td>" + state.MapChange.version + "</td></tr>";
             // Add a row for the last modified date and time.
-            text += "<tr><td><strong>Last Modified</strong></td><td>" + new Date(lastModified * 1000).toUTCString() + "</td></tr>";
+            text += "<tr><td><strong>Last Modified</strong></td><td>" + new Date(state.MapChange.lastModified * 1000).toUTCString() + "</td></tr>";
             // Add a row for who last modified the script.
-            text += "<tr><td><strong>By</strong></td><td>" + modifiedBy + "</td></tr>";
+            text += "<tr><td><strong>By</strong></td><td>" + state.MapChange.modifiedBy + "</td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
@@ -545,7 +544,7 @@ var MapChange = MapChange || (function() {
         // Send the assembled menu text to the chat to be displayed.
         chat("/w", msg.who, text);
         // Debug
-        if (debug) {
+        if (state.MapChange.config.debug) {
             log(msg);
             log(text);
             log(show);
@@ -574,7 +573,7 @@ var MapChange = MapChange || (function() {
                 text += "<tr><td colspan='3'><strong><em>Public</em></strong></td></tr>";
             }
             // Loop through the map displaying an api button for each one.
-            for (var key in publicMaps) {
+            for (var key in state.MapChange.publicMaps) {
                 // Add a tag to open start a row on the table.
                 text += "<tr>";
                 // Generate an api button with the map name that will teleport the user to that map.
@@ -606,7 +605,7 @@ var MapChange = MapChange || (function() {
                 // If they are then add a row for the Private title..
                 text += "<tr><td colspan='3'><strong><em>Private</em></strong></td></tr>";
                 // Loop through the map displaying an api button for each one.
-                for (var key in privateMaps) {
+                for (var key in state.MapChange.privateMaps) {
                     // Add a tag to open start a row on the table.
                     text += "<tr>";
                     // Generate an api button with the map name that will teleport the user to that map.
@@ -669,7 +668,7 @@ var MapChange = MapChange || (function() {
             text += "</table>";
         }
         // Debug
-        if (debug) {
+        if (state.MapChange.config.debug) {
             log(show);
             log(text);
         }
@@ -679,12 +678,12 @@ var MapChange = MapChange || (function() {
 
     var refresh = function(msg) {
         log("Refreshing Maps...");
-        publicMaps = {};
-        privateMaps = {};
+        state.MapChange.publicMaps = {};
+        state.MapChange.privateMaps = {};
         constructMaps();
         log("Refresh Complete");
         
-        if (gmNotify) {
+        if (state.MapChange.config.gmNotify) {
             chat("/w", msg.who, "Map Refresh Complete");
         }
     };
@@ -702,27 +701,27 @@ var MapChange = MapChange || (function() {
             playerPages = {};
         }
         
-        if (target in publicMaps) {
+        if (target in state.MapChange.publicMaps) {
             // Move player.
             if (sender in playerPages) {
                 delete playerPages[sender];
             }
-            playerPages[sender] = publicMaps[target];
+            playerPages[sender] = state.MapChange.publicMaps[target];
             
-            if (gmNotify) {
+            if (state.MapChange.config.gmNotify) {
                 var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
                 chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
             }
         }
-        else if (target in privateMaps) {
+        else if (target in state.MapChange.privateMaps) {
             if (playerIsGM(msg.playerid)) {
                 // Move player.
                 if (sender in playerPages) {
                     delete playerPages[sender];
                 }
-                playerPages[sender] = privateMaps[target];
+                playerPages[sender] = state.MapChange.privateMaps[target];
                 
-                if (gmNotify) {
+                if (state.MapChange.config.gmNotify) {
                     var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
                     chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
                 }
@@ -756,7 +755,7 @@ var MapChange = MapChange || (function() {
         }
         Campaign().set("playerspecificpages", playerPages);
         
-        if (gmNotify) {
+        if (state.MapChange.config.gmNotify) {
             if (differentSender) {
                 chat("/w", "gm", msg.who.replace("(GM)", "") + " has rejoined " + getDisplayNameFromPlayerId(sender) + " with the bookmark")
             }
@@ -769,19 +768,19 @@ var MapChange = MapChange || (function() {
     var moveall = function(msg, target) {
         if (playerIsGM(msg.playerid)) {
             var bookmarkPage = Campaign().get("playerpageid");
-            if (target in publicMaps) {
+            if (target in state.MapChange.publicMaps) {
                 Campaign().set("playerspecificpages", false);
-                bookmarkPage = publicMaps[target];
+                bookmarkPage = state.MapChange.publicMaps[target];
                 
-                if (gmNotify) {
+                if (state.MapChange.config.gmNotify) {
                     chat("/w", "gm", "All players have moved to " + target);
                 }
             }
-            else if (target in privateMaps) {
+            else if (target in state.MapChange.privateMaps) {
                 Campaign().set("playerspecificpages", false);
-                bookmarkPage = privateMaps[target];
+                bookmarkPage = state.MapChange.privateMaps[target];
                 
-                if (gmNotify) {
+                if (state.MapChange.config.gmNotify) {
                     chat("/w", "gm", "All players have moved to " + target);
                 }
             }
@@ -844,20 +843,30 @@ var MapChange = MapChange || (function() {
     return {
         ConstructMaps: constructMaps,
         RegisterEventHandlers: registerEventHandlers,
-        Debug: debug
+        CheckInstall: checkInstall,
+        Debug: state.MapChange.config.debug,
+        GMNotify: state.MapChange.config.gmNotify
     };
 }());
 
+var globalconfig = globalconfig || undefined;
+
 on("ready", function() {
     'use strict';
-    
-    log("Map Change Started");
-    MapChange.ConstructMaps();
-    log("Maps Constructed");
-    MapChange.RegisterEventHandlers();
-    log("Map Change Ready");
-    
+    // Load in the global config settings.
+    MapChange.CheckInstall();
+    // Check if the debug config is turned on.
     if (MapChange.Debug) {
+        // If it is then log out the map construction.
+        log("Map Change Started");
+        MapChange.ConstructMaps();
+        log("Maps Constructed");
+        MapChange.RegisterEventHandlers();
+        log("Map Change Ready");
+    }
+    // Check if the GM notificaiton config is turned on.
+    if (MapChange.GMNotify) {
+        // If it is then send a message to the GM to tell them the script is ready.
         sendChat("Map Change", "/w gm Map Change Ready");
     }
 });
