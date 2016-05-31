@@ -34,8 +34,8 @@
   ],
   "dependencies": [],
   "modifies": {
-    "Campaign.playerpageid": "read,write",
- +  "Campaign.playerspecificpages": "read,write",
+    "Campaign.playerpageid": "read,write"
+    "Campaign.playerspecificpages": "read,write",
     "state.MapChange": "read,write"
   },
   "conflicts": [],
