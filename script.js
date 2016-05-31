@@ -36,6 +36,10 @@
   "modifies": {
     "Campaign.playerpageid": "read,write"
     "Campaign.playerspecificpages": "read,write",
+    "Page.name": "read",
+    "Page._id": "read",
+    "Player._displayname": "read",
+    "Player._id": "read",
     "state.MapChange": "read,write"
   },
   "conflicts": [],
