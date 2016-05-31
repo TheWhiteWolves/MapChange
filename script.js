@@ -11,13 +11,13 @@
       "name": "Debug Mode",
       "type": "checkbox",
       "description": "",
-      "value": "debug"
+      "value": "false"
     },
     {
       "name": "GM Notification",
       "type": "checkbox",
       "description": "",
-      "value": "gmNotify"
+      "value": "true"
     },
     {
       "name": "Marker",
@@ -29,7 +29,7 @@
       "name": "Inverted Marker",
       "type": "checkbox",
       "description": "",
-      "value": "invertedMarker"
+      "value": "false"
     },
   ],
   "dependencies": [],
