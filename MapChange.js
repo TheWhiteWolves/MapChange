@@ -88,7 +88,6 @@ var MapChange = MapChange || (function() {
     var constructMaps = function() {
         // Get an object containing all the pages in the campaign.
         var pages = findObjs({_type: 'page'});
-        
         // Loop through the pages adding them to their relevent maps.
         for (var key in pages) {
             // Get the name of the page that is current being processed.
@@ -154,12 +153,21 @@ var MapChange = MapChange || (function() {
     
     // Parses the commands of the call to the api script.
     var parseCommands = function(args) {
+        if (args === undefined) {
+            // If it is then return an empty array.
+            return [];
+        }
         // Split the arguments by spaces and return the array containing them all.
         return args.split(/\s+/);
     };
     
     // Parses the parameters of the call to the api script.
     var parseParameters = function(args) {
+        // Check if args is undefined.
+        if (args === undefined) {
+            // If it is then return an empty object.
+            return {};
+        }
         // Declare a new object to hold the parameters.
         var params = {};
         // Loop through all the passed in arguments and construct them in into the parameters.
