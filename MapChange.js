@@ -6,11 +6,11 @@ var MapChange = MapChange || (function() {
     'use strict';
     // Defaults.
     // Date last modified in unix timestamp format.
-    var lastModified = "1464699646";
+    var lastModified = "1464885227";
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.00";
+    var version = "1.1";
     // Set to true to use built in debug statements
     var debug = true;
     // Set to false to turn off notifing the GM when a player moves.
@@ -90,22 +90,24 @@ var MapChange = MapChange || (function() {
         var pages = findObjs({_type: 'page'});
         // Loop through the pages adding them to their relevent maps.
         for (var key in pages) {
-            // Get the name of the page that is current being processed.
-            var name = pages[key].get("name");
-            // Get the id of the page that is current being processed.
-            var id = pages[key].get("_id");
-            // Check if the name of the page contains the marker.
-            if (name.indexOf(state.MapChange.config.marker) > -1) {
-                // If the name does then remove the marker from the name and trim off any whitespace.
-                name = name.replace(state.MapChange.config.marker, "").trim();
-                // If invertedMarker is being used then place the name and id of the page in the 
-                // public map else place it in the private map.
-                state.MapChange.config.invertedMarker ? state.MapChange.publicMaps[name] = id : state.MapChange.privateMaps[name] = id;
-            }
-            else {
-                // If the name does not contain the marker then place the name and id in the public map
-                // if invertedMarker is being used else place it in the private map.
-                state.MapChange.config.invertedMarker ? state.MapChange.privateMaps[name] = id : state.MapChange.publicMaps[name] = id;
+            if (pages.hasOwnProperty(key)) {
+                // Get the name of the page that is current being processed.
+                var name = pages[key].get("name");
+                // Get the id of the page that is current being processed.
+                var id = pages[key].get("_id");
+                // Check if the name of the page contains the marker.
+                if (name.indexOf(state.MapChange.config.marker) > -1) {
+                    // If the name does then remove the marker from the name and trim off any whitespace.
+                    name = name.replace(state.MapChange.config.marker, "").trim();
+                    // If invertedMarker is being used then place the name and id of the page in the 
+                    // public map else place it in the private map.
+                    state.MapChange.config.invertedMarker ? state.MapChange.publicMaps[name] = id : state.MapChange.privateMaps[name] = id;
+                }
+                else {
+                    // If the name does not contain the marker then place the name and id in the public map
+                    // if invertedMarker is being used else place it in the private map.
+                    state.MapChange.config.invertedMarker ? state.MapChange.privateMaps[name] = id : state.MapChange.publicMaps[name] = id;
+                }
             }
         }
         // Debug
@@ -172,11 +174,13 @@ var MapChange = MapChange || (function() {
         var params = {};
         // Loop through all the passed in arguments and construct them in into the parameters.
         for (var param in args) {
-            // Split the parameter down by spaces and temporarily store it.
-            var tmp = args[param].split(/\s+/);
-            // Take the first element in tmp and use it as the parameter name and reassemble the
-            // remaining elements and replace the commas with spaces for the parameter value.
-            params[tmp.shift()] = tmp.join().replace(/,/g, " ");
+            if (args.hasOwnProperty(param)) {
+                // Split the parameter down by spaces and temporarily store it.
+                var tmp = args[param].split(/\s+/);
+                // Take the first element in tmp and use it as the parameter name and reassemble the
+                // remaining elements and replace the commas with spaces for the parameter value.
+                params[tmp.shift()] = tmp.join().replace(/,/g, " ");
+            }
         }
         // Return the constructed object of parameters.
         return params;
@@ -272,10 +276,12 @@ var MapChange = MapChange || (function() {
         var players = findObjs({_type: 'player'});
         // Loop through them and try to convert the display name into the player's id.
         for (var key in players) {
-            // Check if the current players display name is equal to the provided one.
-            if (players[key].get("_displayname") === name) {
-                // If it is then return that players id.
-                return players[key].get("_id");
+            if (players.hasOwnProperty(key)) {
+                // Check if the current players display name is equal to the provided one.
+                if (players[key].get("_displayname") === name) {
+                    // If it is then return that players id.
+                    return players[key].get("_id");
+                }
             }
         }
         // If no match was found then return undefined.
@@ -288,10 +294,12 @@ var MapChange = MapChange || (function() {
         var players = findObjs({_type: 'player'})
         // Loop through them and try to convert the id into the player's display name.
         for (var key in players) {
-            // Check if the current players id is equal to the provided one.
-            if (players[key].get("_id") == id) {
-                // If it is then return that players display name.
-                return players[key].get("_displayname");
+            if (players.hasOwnProperty(key)) {
+                // Check if the current players id is equal to the provided one.
+                if (players[key].get("_id") == id) {
+                    // If it is then return that players display name.
+                    return players[key].get("_displayname");
+                }
             }
         }
         // If no match was found then return undefined.
@@ -607,28 +615,32 @@ var MapChange = MapChange || (function() {
             }
             // Loop through the map displaying an api button for each one.
             for (var key in state.MapChange.publicMaps) {
-                // Add a tag to open start a row on the table.
-                text += "<tr>";
-                // Generate an api button with the map name that will teleport the user to that map.
-                // If the map name is longer than 20 characters then trim it and add an elipse.
-                text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
-                // Check if the calling player is a GM or not.
-                if (playerIsGM(msg.playerid)) {
-                    // If they are then add extra GM only buttons.
-                    // Add a button to teleport all players to the chosen map.
-                    text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
-                    // Add a button to teleport a differnet player to the chosen map.
-                    text += "<td><a href='!mc move --target " + key + " --player ?{Player";
-                    // Loop through the players in the campaign adding them to the dropdown for the Other command.
-                    for (var key in players) {
-                        // Add the current players name with any brackets replaced for their ASCII equivalents.
-                        text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                if (state.MapChange.publicMaps.hasOwnProperty(key)) {
+                    // Add a tag to open start a row on the table.
+                    text += "<tr>";
+                    // Generate an api button with the map name that will teleport the user to that map.
+                    // If the map name is longer than 20 characters then trim it and add an elipse.
+                    text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                    // Check if the calling player is a GM or not.
+                    if (playerIsGM(msg.playerid)) {
+                        // If they are then add extra GM only buttons.
+                        // Add a button to teleport all players to the chosen map.
+                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        // Add a button to teleport a differnet player to the chosen map.
+                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        // Loop through the players in the campaign adding them to the dropdown for the Other command.
+                        for (var key in players) {
+                            if (players.hasOwnProperty(key)) {
+                                // Add the current players name with any brackets replaced for their ASCII equivalents.
+                                text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                            }
+                        }
+                        // Complete the Other api button.
+                        text += "}'>Other</a></td>";
                     }
-                    // Complete the Other api button.
-                    text += "}'>Other</a></td>";
+                    // Add a closing tag to finish the row in the table.
+                    text += "</tr>";
                 }
-                // Add a closing tag to finish the row in the table.
-                text += "</tr>";
             }
         }
         // Check if the "show" parameter is set to either "all" or "private".
@@ -639,25 +651,27 @@ var MapChange = MapChange || (function() {
                 text += "<tr><td colspan='3'><strong><em>Private</em></strong></td></tr>";
                 // Loop through the map displaying an api button for each one.
                 for (var key in state.MapChange.privateMaps) {
-                    // Add a tag to open start a row on the table.
-                    text += "<tr>";
-                    // Generate an api button with the map name that will teleport the user to that map.
-                    // If the map name is longer than 20 characters then trim it and add an elipse.
-                    text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
-                    // Add a button to teleport all players to the chosen map.
-                    text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
-                    // Add a button to teleport a differnet player to the chosen map.
-                    text += "<td><a href='!mc moveall --target " + key + " --player ?{Player";
-                    // Loop through the players in the campaign adding them to the dropdown for the command.
-                    for (var key in players) {
-                        // Add the current players name with any brackets replaced for their ASCII equivalents.
-                        text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                    if (state.MapChange.privateMaps.hasOwnProperty(key)) {
+                        // Add a tag to open start a row on the table.
+                        text += "<tr>";
+                        // Generate an api button with the map name that will teleport the user to that map.
+                        // If the map name is longer than 20 characters then trim it and add an elipse.
+                        text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                        // Add a button to teleport all players to the chosen map.
+                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        // Add a button to teleport a differnet player to the chosen map.
+                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        // Loop through the players in the campaign adding them to the dropdown for the command.
+                        for (var key in players) {
+                            // Add the current players name with any brackets replaced for their ASCII equivalents.
+                            text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                        }
+                        // Complete the Other api button.
+                        text += "}'>Other</a></td>";
+                        
+                        // Add a closing tag to finish the row in the table.
+                        text += "</tr>";
                     }
-                    // Complete the Other api button.
-                    text += "}'>Other</a></td>";
-                    
-                    // Add a closing tag to finish the row in the table.
-                    text += "</tr>";
                 }
             }
         }
@@ -687,11 +701,13 @@ var MapChange = MapChange || (function() {
                 text += "<td><a href='!mc rejoin --player ?{Player";
                 // Loop through the players in the campaign adding them to the dropdown for the command.
                 for (var key in players) {
-                    // Add the current players name with any brackets replaced for their ASCII equivalents.
-                    text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                    if (players.hasOwnProperty(key)) {
+                        // Add the current players name with any brackets replaced for their ASCII equivalents.
+                        text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                    }
                 }
                 // Complete the Rejoin Other api button.
-                    text += "}'>Other</a></td>";
+                text += "}'>Other</a></td>";
                 // If they are then add an api button for the map refresh command.
                 text += "<td><a href='!mc refresh'>Refresh</a></td>";
             }
