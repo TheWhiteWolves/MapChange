@@ -6,11 +6,11 @@ var MapChange = MapChange || (function() {
     'use strict';
     // Defaults.
     // Date last modified in unix timestamp format.
-    var lastModified = "1464885227";
+    var lastModified = "1464975173";
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.1";
+    var version = "1.1.6";
     // Set to true to use built in debug statements
     var debug = true;
     // Set to false to turn off notifing the GM when a player moves.
@@ -24,6 +24,8 @@ var MapChange = MapChange || (function() {
     var publicMaps = {};
     // These are maps that only the GM can move people to.
     var privateMaps = {};
+    // These are maps that have been moved to the archived folder.
+    var archiveMaps = {};
     // Check the installation of the script and setup the default configs.
     var checkInstall = function() {
         if (!state.MapChange || state.MapChange.version !== version) {
@@ -52,7 +54,9 @@ var MapChange = MapChange || (function() {
                 // These are maps that players are able to move to using the commands.
                 publicMaps: publicMaps,
                 // These are maps that only the GM can move people to.
-                privateMaps: privateMaps
+                privateMaps: privateMaps,
+                // These are maps that have been moved to the archived folder.
+                archiveMaps: archiveMaps
             };
         }
         // Load and changes to the defaults from the global config.
@@ -86,6 +90,12 @@ var MapChange = MapChange || (function() {
     
     // Constructs the private and public maps for use in the api script.
     var constructMaps = function() {
+        // Clear the public maps.
+        state.MapChange.publicMaps = {};
+        // Clear the private maps.
+        state.MapChange.privateMaps = {};
+        // Clear the archive maps.
+        state.MapChange.archiveMaps = {};
         // Get an object containing all the pages in the campaign.
         var pages = findObjs({_type: 'page'});
         // Loop through the pages adding them to their relevent maps.
@@ -95,18 +105,27 @@ var MapChange = MapChange || (function() {
                 var name = pages[key].get("name");
                 // Get the id of the page that is current being processed.
                 var id = pages[key].get("_id");
-                // Check if the name of the page contains the marker.
-                if (name.indexOf(state.MapChange.config.marker) > -1) {
-                    // If the name does then remove the marker from the name and trim off any whitespace.
+                // Check if the page is an archived page.
+                if (pages[key].get("archived") === true) {
+                    // If it is then remove the private map marker if it exists and trim off any whitespace..
                     name = name.replace(state.MapChange.config.marker, "").trim();
-                    // If invertedMarker is being used then place the name and id of the page in the 
-                    // public map else place it in the private map.
-                    state.MapChange.config.invertedMarker ? state.MapChange.publicMaps[name] = id : state.MapChange.privateMaps[name] = id;
+                    // Place the name and id in the archive maps.
+                    state.MapChange.archiveMaps[name] = id;
                 }
                 else {
-                    // If the name does not contain the marker then place the name and id in the public map
-                    // if invertedMarker is being used else place it in the private map.
-                    state.MapChange.config.invertedMarker ? state.MapChange.privateMaps[name] = id : state.MapChange.publicMaps[name] = id;
+                    // Check if the name of the page contains the marker.
+                    if (name.indexOf(state.MapChange.config.marker) > -1) {
+                        // If the name does then remove the marker from the name and trim off any whitespace.
+                        name = name.replace(state.MapChange.config.marker, "").trim();
+                        // If invertedMarker is being used then place the name and id of the page in the 
+                        // public map else place it in the private map.
+                        state.MapChange.config.invertedMarker ? state.MapChange.publicMaps[name] = id : state.MapChange.privateMaps[name] = id;
+                    }
+                    else {
+                        // If the name does not contain the marker then place the name and id in the public map
+                        // if invertedMarker is being used else place it in the private map.
+                        state.MapChange.config.invertedMarker ? state.MapChange.privateMaps[name] = id : state.MapChange.publicMaps[name] = id;
+                    }
                 }
             }
         }
@@ -116,6 +135,8 @@ var MapChange = MapChange || (function() {
             log(state.MapChange.publicMaps);
             log("Private:");
             log(state.MapChange.privateMaps);
+            log("Archived:");
+            log(state.MapChange.archiveMaps);
         }
     };
     
@@ -368,7 +389,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the parameters section headers.
             text += "<tr><td><strong>Parameter</strong></td><td><strong>Description</strong></td><td><strong>Options</strong></td></tr>";
             // Add a row for the show parameter.
-            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>All<br>Public<br>" + ((playerIsGM(msg.playerid)) ? "Private<br>" : "") + "Utilities<br>Utils</td></tr>";
+            text += "<tr><td>--show</td><td><em>[Optional]</em><br>Used to filter the returned view.</td><td>All<br>Public<br>" + ((playerIsGM(msg.playerid)) ? "Private<br>Archive<br>" : "") + "Utilities<br>Utils</td></tr>";
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
@@ -602,7 +623,7 @@ var MapChange = MapChange || (function() {
         // Create the variable to hold the assembled menu text.
         var text = "";
         // Check if the show parameter is set to show any of the maps.
-        if (show === "all" || show === "public" || show === "private") {
+        if (show === "all" || show === "public" || show === "private" || show === "archive") {
             // Start off the chat message with the Available Maps title.
             text += "<tr><td colspan='3'><strong><em>Available Maps:</em></strong></td></tr>";
         }
@@ -675,18 +696,61 @@ var MapChange = MapChange || (function() {
                 }
             }
         }
+        // Check if the "show" parameter is set to "archive".
+        if (show === "archive") {
+            // If it is then check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                // If they are then add a row for the Private title..
+                text += "<tr><td colspan='3'><strong><em>Archive</em></strong></td></tr>";
+                // Loop through the map displaying an api button for each one.
+                for (var key in state.MapChange.archiveMaps) {
+                    if (state.MapChange.archiveMaps.hasOwnProperty(key)) {
+                        // Add a tag to open start a row on the table.
+                        text += "<tr>";
+                        // Generate an api button with the map name that will teleport the user to that map.
+                        // If the map name is longer than 20 characters then trim it and add an elipse.
+                        text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                        // Add a button to teleport all players to the chosen map.
+                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        // Add a button to teleport a differnet player to the chosen map.
+                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        // Loop through the players in the campaign adding them to the dropdown for the command.
+                        for (var key in players) {
+                            // Add the current players name with any brackets replaced for their ASCII equivalents.
+                            text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                        }
+                        // Complete the Other api button.
+                        text += "}'>Other</a></td>";
+                        
+                        // Add a closing tag to finish the row in the table.
+                        text += "</tr>";
+                    }
+                }
+            }
+        }
+        else {
+            if (show === "all") {
+                // If it is then check if the calling player is a GM or not.
+                if (playerIsGM(msg.playerid)) {
+                    // If they are then add a row for the Private title..
+                    text += "<tr><td colspan='3'><strong><em>Archive</em></strong></td></tr>";
+                    // Add a row with a placeholder button for the archived maps.
+                    text += "<tr><td colspan='3'><a href='!mc menu --show archive'>List All Archive Maps</a></td></tr>";
+                }
+            }
+        }
         // Check to see if the text is currently empty.
         if (text !== "") {
             // If it isn't then wrap the text within a set of table tags.
             text = "<table border='1' cellspacing='0' cellpadding='0'>" + text + "</table>";
         }
         // Check to see if the filter is set to display all.
-        if (show === "all") {
+        if (show === "all" || show === "archive") {
             // Add in a blank line to seperate the menus.
             text += "<br line-height='1'>";
         }
         // Check if the "show" paramter is set to either "all" or "utilities"/"utils".
-        if (show === "all" || show === "utilities" || show === "utils") {
+        if (show === "all" || show === "utilities" || show === "utils" || show === "archive") {
             // Add a table to start a new table.
             text += "<table <table border='1' cellspacing='0' cellpadding='0'>";
             // Add in the title for the utilities section.
@@ -732,6 +796,17 @@ var MapChange = MapChange || (function() {
         state.MapChange.publicMaps = {};
         // Clear out the private maps.
         state.MapChange.privateMaps = {};
+        // Clear out the archive maps.
+        state.MapChange.archiveMaps = {};
+        // Debug
+        if (state.MapChange.config.debug) {
+            log("Clear Public:");
+            log(state.MapChange.publicMaps);
+            log("Clear Private:");
+            log(state.MapChange.privateMaps);
+            log("Clear Archived:");
+            log(state.MapChange.archiveMaps);
+        }
         // Reassemble the maps.
         constructMaps();
         log("Refresh Complete");
@@ -739,6 +814,15 @@ var MapChange = MapChange || (function() {
         if (state.MapChange.config.gmNotify) {
             // If they should then send them a message.
             chat("/w", msg.who, "Map Refresh Complete");
+        }
+        // Debug
+        if (state.MapChange.config.debug) {
+            log("Rebuilt Public:");
+            log(state.MapChange.publicMaps);
+            log("Rebuilt Private:");
+            log(state.MapChange.privateMaps);
+            log("Rebuilt Archived:");
+            log(state.MapChange.archiveMaps);
         }
     };
     
