@@ -6,11 +6,11 @@ var MapChange = MapChange || (function() {
     'use strict';
     // Defaults.
     // Date last modified in unix timestamp format.
-    var lastModified = "1464992684";
+    var lastModified = "1465815959";
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.2.2";
+    var version = "1.2.3";
     // Set to true to use built in debug statements
     var debug = true;
     // Set to false to turn off notifing the GM when a player moves.
@@ -454,7 +454,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
-            text += "<tr><td colspan='2'>!mc move --target " + _.keys(state.MapChange.publicMaps)[0] + "</td><td><a href='!mc move --target " + _.keys(state.MapChange.publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            text += "<tr><td colspan='2'>!mc move --target " + _.first(_.keys(state.MapChange.publicMaps)) + "</td><td><a href='!mc move --target " + _.first(_.keys(state.MapChange.publicMaps)) + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
@@ -477,7 +477,7 @@ var MapChange = MapChange || (function() {
             // Add a row for the example header.
             text += "<tr><td colspan='3'><strong>Example</strong></td></tr>";
             // Add a row with an example and an api button to launch that example.
-            text += "<tr><td colspan='2'>!mc moveall --target " + _.keys(state.MapChange.publicMaps)[0] + "</td><td><a href='!mc moveall --target " + _.keys(state.MapChange.publicMaps)[0] + "'>Show Me!</a></td></tr>";
+            text += "<tr><td colspan='2'>!mc moveall --target " + _.first(_.keys(state.MapChange.publicMaps)) + "</td><td><a href='!mc moveall --target " + _.first(_.keys(state.MapChange.publicMaps)) + "'>Show Me!</a></td></tr>";
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
