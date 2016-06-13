@@ -10,7 +10,7 @@ var MapChange = MapChange || (function() {
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.2";
+    var version = "1.2.2";
     // Set to true to use built in debug statements
     var debug = true;
     // Set to false to turn off notifing the GM when a player moves.
@@ -394,6 +394,10 @@ var MapChange = MapChange || (function() {
             text += "<table border='1' cellspacing='2' cellpadding='4'>";
             // Add a header for the general information table.
             text += "<tr><td colspan='2'><strong>General Information:</strong></td></tr>";
+            // Check if the calling player is a GM or not.
+            if (playerIsGM(msg.playerid)) {
+                text += "<tr><td>Configuring Maps</td><td><a href='!mc help --show map'>Info</a></td></tr>";
+            }
             // Add a row for the information on constructing an API call.
             text += "<tr><td>Constructing an API call</td><td><a href='!mc help --show api'>Info</a></td></tr>";
             // Add a row for the information on using parameters.
@@ -572,6 +576,29 @@ var MapChange = MapChange || (function() {
             // Add in a back button for going back to the menu.
             text += navigation("help", "");
         }
+        // Assemble the text for the configuring maps documentation.
+        if (show === "map") {
+            // Add the opening tag for the table.
+            text += "<table border='1' cellspacing='2' cellpadding='4'>";
+            // Add in the header row for the configuring maps information.
+            text += "<tr><td colspan='3'><strong><em>Configuring Maps</em></strong></td></tr>";
+            // Add the decription on how to configure the campaigns maps.
+            text += "<tr><td colspan='3'>By default all maps are made public and available for any user to move to, there are a couple of\
+                                         options included in the script to modify this behaviour.<br><br>\
+                                         The first option available is to mark a map as private, to do this the GM must include the marker in \
+                                         the maps name, by default this is <strong>[GM]</strong> (this is also configurable), so for example,\
+                                         if you have a map called <strong>Baron Trevis' Keep</strong> then you would add the marker to this name\
+                                         to make it <strong>[GM] Baron Trevis' Keep</strong>, this would then add that map to the private list\
+                                         instead of public.<br><br>\
+                                         The second way to modify the behaviour is to invert the map markings, for this the GM must set the\
+                                         Inverted Marker option to true, what this will do is place all maps into the private listing by default\
+                                         instead of the public listings, this then requires the GM to mark a map in the above way to make it public.\
+                                         (this is where changing the marker may be useful).</td></tr>";
+            // Add the closing tag for the table.
+            text += "</table>";
+            // Add in a back button for going back to the menu.
+            text += navigation("", "api");
+        }
         // Assemble the text for the constructing an API documentation.
         if (show === "api") {
             // Add the opening tag for the table.
@@ -591,7 +618,7 @@ var MapChange = MapChange || (function() {
             // Add the closing tag for the table.
             text += "</table>";
             // Add in a back button for going back to the menu.
-            text += navigation("", "params");
+            text += navigation("map", "params");
         }
         // Assemble the text for the using parameters documentation.
         if (show === "params") {
