@@ -10,13 +10,15 @@ var MapChange = MapChange || (function() {
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.2.3";
+    var version = "1.2.5";
     // Set to true to use built in debug statements
-    var debug = true;
+    var debug = state.MapChange.config.debug || false;
     // Set to false to turn off notifing the GM when a player moves.
-    var gmNotify = true;
+    var gmNotify = state.MapChange.config.gmNotify || false;
     // The marker used to decide what is placed in the private map.
     var marker = "[GM]";
+    // The marker used to decide what is placed in the hidden map.
+    var hideMarker = "[Hide]";
     // When true this places the pages with name containing the marker into the public list.
     // Use this if you want maps to be private by default instead of public by default.
     var invertedMarker = false;
@@ -41,6 +43,8 @@ var MapChange = MapChange || (function() {
                     gmNotify: gmNotify,
                     // The marker used to decide what is placed in the private map.
                     marker: marker,
+                    // The marker used to decide what is placed in the hidden map.
+                    hideMarker: hideMarker,
                     // When true this places the pages with name containing the marker into the public list.
                     // Use this if you want maps to be private by default instead of public by default.
                     invertedMarker: invertedMarker
@@ -73,16 +77,19 @@ var MapChange = MapChange || (function() {
             // Get the last saved time.
             st.gcUpdated = gc.lastsaved;
             // Get the debug setting from the global config.
-            st.config.debug = JSON.parse(gc['Debug Mode']) === false;
+            st.config.debug = gc['Debug Mode'] === true;
             // Get the gmNotify setting from the global config.
-            st.config.gmNotify = JSON.parse(gc['GM Notification']) === true;
-            // Get the invertedMarker setting from the global config.
-            st.config.marker = gc['Marker'] === "[GM]";
+            st.config.gmNotify = gc['GM Notification'] === true;
             // Get the marker setting from the global config.
-            st.config.invertedMarker = JSON.parse(gc['Inverted Marker']) === false;
+            st.config.marker = gc['Marker'] || "[GM]";
+            // Get the hide marker setting from the global config.
+            st.config.hideMarker = gc['Hide Marker'] || "[Hide]";
+            // Get the invertedMarker setting from the global config.
+            st.config.invertedMarker = gc['Inverted Marker'] === true;
         }
         // Debug
         if (st.config.debug) {
+            log("State Config:");
             log(st.config);
         }
     };
@@ -284,6 +291,10 @@ var MapChange = MapChange || (function() {
                     // Run rejoin on the sender of the api call.
                     rejoin(msg, msg.playerid);
                 }
+                break;
+            case "rejoinall":
+                // Move all the players back to the bookmark.
+                rejoinall(msg);
                 break;
             case "moveall":
                 // Move all the players back to the bookmark and then move the bookmark to the map with
@@ -720,19 +731,19 @@ var MapChange = MapChange || (function() {
                     text += "<tr>";
                     // Generate an api button with the map name that will teleport the user to that map.
                     // If the map name is longer than 20 characters then trim it and add an elipse.
-                    text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                    text += "<td><a href='!mc move --target " + _.escape(key) + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                     // Check if the calling player is a GM or not.
                     if (playerIsGM(msg.playerid)) {
                         // If they are then add extra GM only buttons.
                         // Add a button to teleport all players to the chosen map.
-                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        text += "<td><a href='!mc moveall --target " + _.escape(key) + "'>All</a></td>";
                         // Add a button to teleport a differnet player to the chosen map.
-                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        text += "<td><a href='!mc move --target " + _.escape(key) + " --player ?{Player";
                         // Loop through the players in the campaign adding them to the dropdown for the Other command.
                         for (var key in players) {
                             if (players.hasOwnProperty(key)) {
                                 // Add the current players name with any brackets replaced for their ASCII equivalents.
-                                text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                                text += "|" + _.escape(players[key].get("_displayname"));
                             }
                         }
                         // Complete the Other api button.
@@ -756,15 +767,15 @@ var MapChange = MapChange || (function() {
                         text += "<tr>";
                         // Generate an api button with the map name that will teleport the user to that map.
                         // If the map name is longer than 20 characters then trim it and add an elipse.
-                        text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                        text += "<td><a href='!mc move --target " + _.escape(key) + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                         // Add a button to teleport all players to the chosen map.
-                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        text += "<td><a href='!mc moveall --target " + _.escape(key) + "'>All</a></td>";
                         // Add a button to teleport a differnet player to the chosen map.
-                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        text += "<td><a href='!mc move --target " + _.escape(key) + " --player ?{Player";
                         // Loop through the players in the campaign adding them to the dropdown for the command.
                         for (var key in players) {
                             // Add the current players name with any brackets replaced for their ASCII equivalents.
-                            text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                            text += "|" + _.escape(players[key].get("_displayname"));
                         }
                         // Complete the Other api button.
                         text += "}'>Other</a></td>";
@@ -788,15 +799,15 @@ var MapChange = MapChange || (function() {
                         text += "<tr>";
                         // Generate an api button with the map name that will teleport the user to that map.
                         // If the map name is longer than 20 characters then trim it and add an elipse.
-                        text += "<td><a href='!mc move --target " + key + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
+                        text += "<td><a href='!mc move --target " + _.escape(key) + "'>" + ((key.length > displayLength) ? key.substr(0, displayLength) + "..." : key) + "</a></td>";
                         // Add a button to teleport all players to the chosen map.
-                        text += "<td><a href='!mc moveall --target " + key + "'>All</a></td>";
+                        text += "<td><a href='!mc moveall --target " + _.escape(key) + "'>All</a></td>";
                         // Add a button to teleport a differnet player to the chosen map.
-                        text += "<td><a href='!mc move --target " + key + " --player ?{Player";
+                        text += "<td><a href='!mc move --target " + _.escape(key) + " --player ?{Player";
                         // Loop through the players in the campaign adding them to the dropdown for the command.
                         for (var key in players) {
                             // Add the current players name with any brackets replaced for their ASCII equivalents.
-                            text += "|" + players[key].get("_displayname").replace("(", _.escape("(")).replace(")", _.escape(")"));
+                            text += "|" + _.escape(players[key].get("_displayname"));
                         }
                         // Complete the Other api button.
                         text += "}'>Other</a></td>";
@@ -840,6 +851,8 @@ var MapChange = MapChange || (function() {
             text += "<td><a href='!mc rejoin'>Rejoin</a></td>";
             // Check if the caller is a GM or not.
             if (playerIsGM(msg.playerid)) {
+                // Add an api button for the GM to force all players to rejoin the bookmark.
+                text += "<td><a href='!mc rejoinall'>All</a></td>"
                 // Add an api button for the GM to force rejoin another player to the bookmark.
                 text += "<td><a href='!mc rejoin --player ?{Player";
                 // Loop through the players in the campaign adding them to the dropdown for the command.
@@ -854,8 +867,11 @@ var MapChange = MapChange || (function() {
                 // If they are then add an api button for the map refresh command.
                 text += "<td><a href='!mc refresh'>Refresh</a></td>";
             }
-            // Add an api button for the help command.
-            text += "<td><a href='!mc help'>Help</a></td>";
+            // Check if the caller is a GM or not.
+            if (!playerIsGM(msg.playerid)) {
+                // Add an api button for the help command.
+                text += "<td><a href='!mc help'>Help</a></td>";
+            }
             // Add the closing tag of the last row.
             text += "</tr>";
             // Check if the caller is a GM or not.
@@ -872,7 +888,9 @@ var MapChange = MapChange || (function() {
                     }
                 }
                 // Complete the Toggle Block api button.
-                text += "}'>Toggle Block</a></td></tr>";
+                text += "}'>Toggle Block</a></td>";
+                // Add an api button for the help command.
+                text += "<td><a href='!mc help'>Help</a></td></tr>";
             }
             // Add a tag to close the table.
             text += "</table>";
@@ -963,9 +981,23 @@ var MapChange = MapChange || (function() {
                 }
             }
         }
+        else if (target in state.MapChange.archiveMaps) {
+            if (playerIsGM(msg.playerid)) {
+                // Move player.
+                if (sender in playerPages) {
+                    delete playerPages[sender];
+                }
+                playerPages[sender] = state.MapChange.archiveMaps[target];
+                
+                if (state.MapChange.config.gmNotify) {
+                    var playerAddition = ((differentSender) ? getDisplayNameFromPlayerId(sender) + " " : "");
+                    chat("/w", "gm", msg.who.replace("(GM)", "") + " has moved " + playerAddition + "to " + target);
+                }
+            }
+        }
         else {
             // Report Map not found.
-            chat("/w", msg.who, "Map " + target + "not found");
+            chat("/w", msg.who, "Map " + target + " not found");
         }
         
         Campaign().set("playerspecificpages", false);
@@ -1000,7 +1032,18 @@ var MapChange = MapChange || (function() {
             }
         }
     };
+    
+    var rejoinall = function(msg) {
+        if (playerIsGM(msg.playerid)) { 
+            Campaign().set("playerspecificpages", false);
+            
+            if (state.MapChange.config.gmNotify) {
+                chat("/w", "gm", "All players have rejoined the bookmark");
+            }
+        }
+    };
 
+    // Add teh archive maps move in here
     var moveall = function(msg, target) {
         if (playerIsGM(msg.playerid)) {
             var bookmarkPage = Campaign().get("playerpageid");
@@ -1015,6 +1058,14 @@ var MapChange = MapChange || (function() {
             else if (target in state.MapChange.privateMaps) {
                 Campaign().set("playerspecificpages", false);
                 bookmarkPage = state.MapChange.privateMaps[target];
+                
+                if (state.MapChange.config.gmNotify) {
+                    chat("/w", "gm", "All players have moved to " + target);
+                }
+            }
+            else if (target in state.MapChange.archiveMaps) {
+                Campaign().set("playerspecificpages", false);
+                bookmarkPage = state.MapChange.archiveMaps[target];
                 
                 if (state.MapChange.config.gmNotify) {
                     chat("/w", "gm", "All players have moved to " + target);
