@@ -6,11 +6,11 @@ var MapChange = MapChange || (function() {
     'use strict';
     // Defaults.
     // Date last modified in unix timestamp format.
-    var lastModified = "1465987273";
+    var lastModified = "1466247059";
     // Name of the person who last modified the script.
     var modifiedBy = "TheWhiteWolves";
     // Local version of the script.
-    var version = "1.2.7";
+    var version = "1.3";
     // Set to true to use built in debug statements
     var debug = state.MapChange.config.debug || false;
     // Set to false to turn off notifing the GM when a player moves.
