@@ -6,11 +6,11 @@ var MapChange = MapChange || (function() {
     'use strict';
     // Defaults.
     // Date last modified in unix timestamp format.
-    var lastModified = "1466627592";
+    var lastModified = "1717196400";
     // Name of the person who last modified the script.
-    var modifiedBy = "TheWhiteWolves";
+    var modifiedBy = "TheWhiteWolves, keithcurtis";
     // Local version of the script.
-    var version = "1.3";
+    var version = "1.6";
     // Set to true to use built in debug statements
     var debug = false;
     // Set to false to turn off notifing the GM when a player moves.
@@ -71,7 +71,7 @@ var MapChange = MapChange || (function() {
     // Loads the config options from the global config.
     var loadGlobalConfig = function() {
         // Get a reference to the global config.
-        var gc = globalconfig && globalconfig.mapchange;
+        var gc = (globalconfig && (globalconfig.MapChange || globalconfig.mapchange));
         // Get a reference to the state.
         var st = state.MapChange;
         // Check if the settings need updating from the global config.
@@ -343,6 +343,8 @@ var MapChange = MapChange || (function() {
 
     // Convert the provided display name into the player id for that player.
     var getPlayerIdFromDisplayName = function(name) {
+        // Remove the GM tag from a players name and trim any leftover whitespace
+        name = name.replace("(GM)", "").trim();
         // Find all the player objects in the campaign.
         var players = findObjs({_type: 'player'});
         // Loop through them and try to convert the display name into the player's id.
@@ -1276,10 +1278,10 @@ var MapChange = MapChange || (function() {
     };
 }());
 
-var globalconfig = globalconfig || undefined;
-
 on("ready", function() {
     'use strict';
+    log("globalconfig: ")
+    log(globalconfig)
     // Load in the global config settings.
     MapChange.CheckInstall();
     // If it is then log out the map construction.
@@ -1291,5 +1293,6 @@ on("ready", function() {
     MapChange.RegisterEventHandlers();
     log("Map Change Ready");
     // If it is then send a message to the GM to tell them the script is ready.
-    sendChat("Map Change", "/w gm Map Change Ready");
+    //Commented this out, since it produces a string of chat spam. - keithcurtis
+    //sendChat("Map Change", "/w gm Map Change Ready");
 });
