@@ -9,13 +9,15 @@
 	"useroptions": [{
 		"name": "Debug Mode",
 		"type": "checkbox",
-		"description": "Set to true to use built in debug statements",
-		"value": "false"
+		"value": "true",
+		"checked": "unchecked",
+		"description": "Set to true to use built in debug statements"
 	}, {
 		"name": "GM Notification",
 		"type": "checkbox",
-		"description": "Set to true to turn on notifing the GM when events happen.",
-		"value": "false"
+		"value": "true",
+		"checked": "unchecked",
+		"description": "Set to true to turn on notifing the GM when events happen."
 	}, {
 		"name": "Marker",
 		"type": "text",
@@ -29,8 +31,9 @@
 	}, {
 		"name": "Inverted Marker",
 		"type": "checkbox",
-		"description": "When true this places the pages with name containing the marker into the public list.\nUse this if you want maps to be private by default instead of public by default.",
-		"value": "false"
+		"value": "true",
+		"checked": "unchecked",
+		"description": "When true this places the pages with name containing the marker into the public list.\nUse this if you want maps to be private by default instead of public by default."
 	}],
 	"dependencies": [],
 	"modifies": {
